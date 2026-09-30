@@ -31,7 +31,7 @@ export const BaseRatesModal: React.FC<BaseRatesModalProps> = ({
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4">
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -46,10 +46,10 @@ export const BaseRatesModal: React.FC<BaseRatesModalProps> = ({
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.94, y: 15 }}
             transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-            className="relative w-full max-w-md bg-white rounded-3xl shadow-2xl overflow-hidden border border-slate-200/90 z-10"
+            className="relative w-full max-w-md max-h-[92vh] flex flex-col bg-white rounded-3xl shadow-2xl overflow-hidden border border-slate-200/90 z-10"
           >
             {/* Header */}
-            <div className="px-5 py-4 bg-slate-50/80 border-b border-slate-100 flex items-center justify-between">
+            <div className="px-4 sm:px-5 py-3.5 sm:py-4 bg-slate-50/80 border-b border-slate-100 flex items-center justify-between shrink-0">
               <div className="flex items-center gap-2.5">
                 <span className="material-symbols-outlined text-[#0D5FAE] text-[18px]">payments</span>
                 <h3 className="font-bold text-sm text-slate-900 tracking-tight">Tarifas Base por Cancha</h3>
@@ -65,7 +65,7 @@ export const BaseRatesModal: React.FC<BaseRatesModalProps> = ({
             </div>
 
             {/* Content */}
-            <div className="p-5 flex flex-col gap-3.5 text-xs">
+            <div className="p-4 sm:p-5 flex-1 overflow-y-auto flex flex-col gap-3.5 text-xs">
               <p className="text-slate-500 text-[11px] leading-relaxed">
                 Estas tarifas se sugieren por defecto al agendar turnos. El recepcionista puede editar el precio final de cualquier turno en el momento de reservar.
               </p>

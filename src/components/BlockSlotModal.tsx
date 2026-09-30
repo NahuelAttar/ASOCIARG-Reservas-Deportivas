@@ -57,10 +57,10 @@ export const BlockSlotModal: React.FC<BlockSlotModalProps> = ({
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.94, y: 15 }}
             transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-            className="relative w-full max-w-sm bg-white rounded-3xl shadow-2xl overflow-hidden border border-slate-200/90 z-10"
+            className="relative w-full max-w-sm max-h-[92vh] flex flex-col bg-white rounded-3xl shadow-2xl overflow-hidden border border-slate-200/90 z-10"
           >
             {/* Header */}
-            <div className="px-5 py-4 bg-slate-50/80 border-b border-slate-100 flex items-center justify-between">
+            <div className="px-4 sm:px-5 py-3.5 sm:py-4 bg-slate-50/80 border-b border-slate-100 flex items-center justify-between shrink-0">
               <div className="flex items-center gap-2.5">
                 <span className="material-symbols-outlined text-slate-700 text-[18px]">lock</span>
                 <h3 className="font-bold text-sm text-slate-900 tracking-tight">Bloquear Cancha / Horario</h3>
@@ -76,7 +76,7 @@ export const BlockSlotModal: React.FC<BlockSlotModalProps> = ({
             </div>
 
             {/* Form */}
-            <form onSubmit={handleSubmit} className="p-5 flex flex-col gap-3.5 text-xs">
+            <form onSubmit={handleSubmit} className="p-4 sm:p-5 flex-1 overflow-y-auto flex flex-col gap-3.5 text-xs">
               {/* Court */}
               <div className="flex flex-col gap-1">
                 <label className="font-bold uppercase tracking-wider text-[10px] text-slate-500">

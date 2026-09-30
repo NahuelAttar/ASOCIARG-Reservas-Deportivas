@@ -207,7 +207,7 @@ export const BookingDrawer: React.FC<BookingDrawerProps> = ({
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
             transition={{ type: 'spring', damping: 28, stiffness: 280 }}
-            className="fixed inset-y-0 right-0 w-full max-w-md bg-white shadow-2xl z-50 flex flex-col justify-between overflow-hidden sm:rounded-l-3xl border-l border-slate-200/90"
+            className="fixed inset-y-0 right-0 w-full max-w-full sm:max-w-md bg-white shadow-2xl z-50 flex flex-col justify-between overflow-hidden sm:rounded-l-3xl border-l border-slate-200/90"
           >
             {mode === 'new' ? (
               /* ========================================================= */
@@ -215,7 +215,7 @@ export const BookingDrawer: React.FC<BookingDrawerProps> = ({
               /* ========================================================= */
               <form onSubmit={handleSubmitNew} className="flex-1 flex flex-col justify-between overflow-hidden">
                 {/* Header */}
-                <div className="px-6 py-5 border-b border-slate-100 flex items-start justify-between bg-slate-50/70">
+                <div className="px-4 sm:px-6 py-4 sm:py-5 border-b border-slate-100 flex items-start justify-between bg-slate-50/70">
                   <div>
                     <div className="flex items-center gap-1.5 text-[11px] font-extrabold uppercase tracking-wider text-[#0D5FAE]">
                       <span>{currentCourt?.sportLabel}</span>
@@ -243,14 +243,14 @@ export const BookingDrawer: React.FC<BookingDrawerProps> = ({
                 </div>
 
                 {/* Body */}
-                <div className="flex-1 overflow-y-auto px-6 py-5 flex flex-col gap-5 text-xs">
+                <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-4 sm:py-5 flex flex-col gap-4 sm:gap-5 text-xs">
                   {/* 1. Cancha y Horario Selector */}
                   <div className="flex flex-col gap-2 p-3.5 bg-slate-50 rounded-2xl border border-slate-200/80">
                     <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
                       Instalación y Horario
                     </span>
 
-                    <div className="grid grid-cols-2 gap-2">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                       <div>
                         <label className="text-[10px] text-slate-400 font-semibold">Cancha (Deporte)</label>
                         <select
@@ -451,12 +451,12 @@ export const BookingDrawer: React.FC<BookingDrawerProps> = ({
                 </div>
 
                 {/* Footer: Confirmar reserva (sin cobrar) */}
-                <div className="p-5 border-t border-slate-100 flex items-center gap-3 bg-slate-50/70">
+                <div className="p-4 sm:p-5 border-t border-slate-100 flex items-center gap-2.5 sm:gap-3 bg-slate-50/70">
                   <motion.button
                     whileTap={{ scale: 0.96 }}
                     type="button"
                     onClick={onClose}
-                    className="py-3 px-5 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs transition-colors cursor-pointer text-center"
+                    className="py-3 px-4 sm:px-5 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs transition-colors cursor-pointer text-center"
                   >
                     Cancelar
                   </motion.button>
@@ -464,7 +464,7 @@ export const BookingDrawer: React.FC<BookingDrawerProps> = ({
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.96 }}
                     type="submit"
-                    className="flex-1 py-3 px-6 rounded-full bg-[#0D5FAE] hover:bg-[#094785] text-white font-extrabold text-sm transition-all shadow-md cursor-pointer text-center flex items-center justify-center gap-2"
+                    className="flex-1 py-3 px-4 sm:px-6 rounded-full bg-[#0D5FAE] hover:bg-[#094785] text-white font-extrabold text-sm transition-all shadow-md cursor-pointer text-center flex items-center justify-center gap-2"
                   >
                     <span>Confirmar Reserva</span>
                     <span>·</span>
@@ -479,7 +479,7 @@ export const BookingDrawer: React.FC<BookingDrawerProps> = ({
               reservation && (
                 <div className="flex-1 flex flex-col justify-between overflow-hidden">
                   {/* Header */}
-                  <div className="px-6 py-5 border-b border-slate-100 flex items-start justify-between bg-slate-50/70">
+                  <div className="px-4 sm:px-6 py-4 sm:py-5 border-b border-slate-100 flex items-start justify-between bg-slate-50/70">
                     <div>
                       <div className="flex items-center gap-2">
                         <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
@@ -531,7 +531,7 @@ export const BookingDrawer: React.FC<BookingDrawerProps> = ({
                   </div>
 
                   {/* Ficha Information Body */}
-                  <div className="flex-1 overflow-y-auto px-6 py-5 flex flex-col gap-4 text-xs">
+                  <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-4 sm:py-5 flex flex-col gap-3.5 sm:gap-4 text-xs">
                     {/* Persona */}
                     <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200/80 flex flex-col gap-1.5">
                       <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
@@ -689,7 +689,7 @@ export const BookingDrawer: React.FC<BookingDrawerProps> = ({
                   </div>
 
                   {/* Footer */}
-                  <div className="p-5 border-t border-slate-100 flex items-center justify-end bg-slate-50/70">
+                  <div className="p-4 sm:p-5 border-t border-slate-100 flex items-center justify-end bg-slate-50/70 shrink-0">
                     <motion.button
                       whileTap={{ scale: 0.96 }}
                       type="button"

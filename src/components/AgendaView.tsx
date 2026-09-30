@@ -240,9 +240,9 @@ export const AgendaView: React.FC<AgendaViewProps> = ({
         </div>
 
         {/* Search & Quick Filters Bar */}
-        <div className="flex items-center justify-between gap-3 flex-wrap sm:flex-nowrap">
+        <div className="flex items-center justify-between gap-2.5 sm:gap-3 flex-wrap sm:flex-nowrap">
           {/* Fudo style clean search input */}
-          <div className="relative flex-1 min-w-[240px]">
+          <div className="relative flex-1 w-full sm:w-auto min-w-0 sm:min-w-[240px]">
             <span className="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-[18px]">
               search
             </span>
@@ -508,13 +508,13 @@ export const AgendaView: React.FC<AgendaViewProps> = ({
             <table className="w-full border-collapse text-left">
               <thead>
                 <tr className="bg-slate-50/95 border-b border-slate-200 text-slate-500 font-semibold text-xs">
-                  <th className="sticky left-0 bg-slate-50/95 z-30 w-[220px] min-w-[220px] py-2.5 px-4 border-r border-slate-200 font-bold uppercase tracking-wider text-[11px] text-slate-500 shadow-[1px_0_2px_rgba(0,0,0,0.03)]">
+                  <th className="sticky left-0 bg-slate-50/95 z-30 w-[140px] min-w-[140px] sm:w-[220px] sm:min-w-[220px] py-2.5 px-3 sm:px-4 border-r border-slate-200 font-bold uppercase tracking-wider text-[11px] text-slate-500 shadow-[1px_0_2px_rgba(0,0,0,0.03)]">
                     Cancha
                   </th>
                   {timelineHours.map((hour) => (
                     <th
                       key={hour}
-                      className="py-2.5 px-2 text-center border-r last:border-r-0 border-slate-200 font-bold text-xs text-slate-700 tabular-nums min-w-[130px]"
+                      className="py-2.5 px-2 text-center border-r last:border-r-0 border-slate-200 font-bold text-xs text-slate-700 tabular-nums min-w-[110px] sm:min-w-[130px]"
                     >
                       <span>{hour} hs</span>
                     </th>
@@ -523,11 +523,9 @@ export const AgendaView: React.FC<AgendaViewProps> = ({
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {filteredCourts.map((court) => {
-                  const isHourAndHalf = court.sport === 'padel' || court.sport === 'tenis';
-
                   return (
                     <tr key={court.id} className="h-[52px] hover:bg-slate-50/40 transition-colors">
-                      <td className="sticky left-0 bg-white z-20 w-[220px] min-w-[220px] py-2 px-4 border-r border-slate-200 shadow-[1px_0_2px_rgba(0,0,0,0.03)] align-middle">
+                      <td className="sticky left-0 bg-white z-20 w-[140px] min-w-[140px] sm:w-[220px] sm:min-w-[220px] py-2 px-3 sm:px-4 border-r border-slate-200 shadow-[1px_0_2px_rgba(0,0,0,0.03)] align-middle">
                         <div className="flex flex-col justify-center leading-tight">
                           <div className="font-bold text-xs text-slate-900 tracking-tight flex items-center gap-1.5">
                             <span className="truncate">{court.name}</span>
@@ -556,7 +554,7 @@ export const AgendaView: React.FC<AgendaViewProps> = ({
                             <td
                               key={hour}
                               onClick={() => onSelectReservation(res)}
-                              className="p-1.5 border-r last:border-r-0 border-slate-100 cursor-pointer align-middle min-w-[130px]"
+                              className="p-1.5 border-r last:border-r-0 border-slate-100 cursor-pointer align-middle min-w-[110px] sm:min-w-[130px]"
                             >
                               <motion.div
                                 whileHover={{ scale: 1.02 }}
@@ -598,7 +596,7 @@ export const AgendaView: React.FC<AgendaViewProps> = ({
                           <td
                             key={hour}
                             onClick={() => onSelectSlot(court.id, hour)}
-                            className="p-1.5 border-r last:border-r-0 border-slate-100 cursor-pointer align-middle group min-w-[130px]"
+                            className="p-1.5 border-r last:border-r-0 border-slate-100 cursor-pointer align-middle group min-w-[110px] sm:min-w-[130px]"
                           >
                             <motion.div
                               whileHover={{ scale: 1.02 }}

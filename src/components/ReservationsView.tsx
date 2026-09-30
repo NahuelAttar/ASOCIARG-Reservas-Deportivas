@@ -73,9 +73,9 @@ export const ReservationsView: React.FC<ReservationsViewProps> = ({
     .reduce((acc, r) => acc + (r.paidAmount || r.price), 0);
 
   return (
-    <div className="flex flex-col gap-4 max-w-4xl mx-auto w-full py-2">
+    <div className="flex flex-col gap-3.5 sm:gap-4 max-w-4xl mx-auto w-full py-1 sm:py-2">
       {/* Search & Filter Header (Fudo Style) */}
-      <div className="bg-white rounded-3xl border border-slate-200/80 p-5 shadow-xs flex flex-col gap-3.5">
+      <div className="bg-white rounded-3xl border border-slate-200/80 p-4 sm:p-5 shadow-xs flex flex-col gap-3 sm:gap-3.5">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-full bg-blue-50 text-[#0D5FAE] flex items-center justify-center font-bold">
@@ -268,16 +268,16 @@ export const ReservationsView: React.FC<ReservationsViewProps> = ({
                   transition={{ duration: 0.2, delay: index * 0.02 }}
                   whileHover={{ y: -2, scale: 1.005, transition: { duration: 0.15 } }}
                   onClick={() => onSelectReservation(r)}
-                  className="bg-white rounded-3xl border border-slate-200/80 p-4.5 hover:border-[#0D5FAE]/50 shadow-xs hover:shadow-md transition-all cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between gap-4 group"
+                  className="bg-white rounded-3xl border border-slate-200/80 p-3.5 sm:p-4.5 hover:border-[#0D5FAE]/50 shadow-xs hover:shadow-md transition-all cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 group"
                 >
                   {/* Person & Court Info */}
-                  <div className="flex items-start gap-3.5">
-                    <div className="w-10 h-10 rounded-2xl bg-slate-100 flex items-center justify-center font-bold text-slate-700 text-sm group-hover:bg-blue-50 group-hover:text-[#0D5FAE] transition-colors shrink-0">
+                  <div className="flex items-start gap-3 sm:gap-3.5">
+                    <div className="w-9 sm:w-10 h-9 sm:h-10 rounded-2xl bg-slate-100 flex items-center justify-center font-bold text-slate-700 text-xs sm:text-sm group-hover:bg-blue-50 group-hover:text-[#0D5FAE] transition-colors shrink-0">
                       {r.person.name.charAt(0)}
                     </div>
 
-                    <div className="flex flex-col gap-0.5">
-                      <div className="flex items-center gap-2 flex-wrap">
+                    <div className="flex flex-col gap-0.5 min-w-0">
+                      <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
                         <span className="font-extrabold text-sm text-slate-900 tracking-tight">
                           {r.person.name}
                         </span>
@@ -318,7 +318,7 @@ export const ReservationsView: React.FC<ReservationsViewProps> = ({
                   </div>
 
                   {/* Date, Time & Status */}
-                  <div className="flex items-center justify-between sm:justify-end gap-3 shrink-0 border-t sm:border-t-0 pt-2 sm:pt-0 border-slate-100">
+                  <div className="flex items-center justify-between sm:justify-end gap-2.5 sm:gap-3 shrink-0 border-t sm:border-t-0 pt-2.5 sm:pt-0 border-slate-100 flex-wrap sm:flex-nowrap">
                     <div className="flex flex-col sm:items-end">
                       <div className="font-bold text-xs text-slate-900 tabular-nums">
                         {isToday ? 'Hoy' : r.date} · {r.startTime} a {r.endTime} hs

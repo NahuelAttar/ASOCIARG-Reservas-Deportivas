@@ -144,9 +144,9 @@ export const AgendaView: React.FC<AgendaViewProps> = ({
           <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar w-full sm:w-auto relative">
             {(
               [
-                { id: 'padel', label: 'Pádel (1h 30m)', icon: '🎾', count: 8 },
-                { id: 'futbol', label: 'Fútbol 7 (1h)', icon: '⚽', count: 4 },
-                { id: 'tenis', label: 'Tenis (1h 30m)', icon: '🎾', count: 3 },
+                { id: 'padel', label: 'Pádel', icon: '🎾', count: 8 },
+                { id: 'futbol', label: 'Fútbol 7', icon: '⚽', count: 4 },
+                { id: 'tenis', label: 'Tenis', icon: '🎾', count: 3 },
                 { id: 'all', label: 'Todas', icon: '⭐', count: courts.length },
               ] as const
             ).map((cat) => {
@@ -331,9 +331,6 @@ export const AgendaView: React.FC<AgendaViewProps> = ({
                         <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#0D5FAE] bg-blue-50/80 px-2 py-0.5 rounded-full">
                           {court.sportLabel}
                         </span>
-                        <span className="text-[10px] font-bold text-slate-600 bg-slate-100 px-2 py-0.5 rounded-full">
-                          {isHourAndHalf ? 'Turnos de 1h 30m' : 'Turnos de 1 hora'}
-                        </span>
                         {court.isCovered ? (
                           <span className="text-[10px] font-semibold text-slate-600 bg-slate-100 px-2 py-0.5 rounded-full flex items-center gap-1">
                             <span className="material-symbols-outlined text-[12px]">roofing</span>
@@ -363,7 +360,7 @@ export const AgendaView: React.FC<AgendaViewProps> = ({
                         ${court.basePrice.toLocaleString('es-AR')}
                       </div>
                       <span className="text-[10px] text-slate-400 font-medium">
-                        {isHourAndHalf ? 'por 1h 30m' : 'por 1 hora'}
+                        por hora
                       </span>
                     </div>
                   </div>
@@ -373,7 +370,7 @@ export const AgendaView: React.FC<AgendaViewProps> = ({
                     <div className="flex items-center justify-between text-xs">
                       <span className="font-bold text-slate-700 flex items-center gap-1.5">
                         <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                        <span>Turnos para hoy ({isHourAndHalf ? '1h 30m' : '1h'}):</span>
+                        <span>Turnos para hoy:</span>
                       </span>
                       <span className="text-[11px] text-slate-500 font-medium bg-slate-50 px-2 py-0.5 rounded-full border border-slate-100">
                         <strong className="text-emerald-700 font-bold">{freeCount} libres</strong> de {totalCount}
@@ -465,7 +462,7 @@ export const AgendaView: React.FC<AgendaViewProps> = ({
                   <div className="flex items-center justify-between pt-2 text-xs">
                     <span className="text-[11px] text-slate-400 flex items-center gap-1 font-medium">
                       <span className="material-symbols-outlined text-[14px]">touch_app</span>
-                      <span>Tocá cualquier horario libre ({isHourAndHalf ? '1h 30m' : '1h'})</span>
+                      <span>Tocá cualquier horario libre</span>
                     </span>
 
                     <motion.button
@@ -520,9 +517,6 @@ export const AgendaView: React.FC<AgendaViewProps> = ({
                         <div className="flex flex-col justify-center leading-tight">
                           <div className="font-bold text-xs text-slate-900 tracking-tight flex items-center gap-1.5">
                             <span className="truncate">{court.name}</span>
-                            <span className="text-[9px] font-semibold text-slate-500 bg-slate-100 px-1 py-0.2 rounded-full shrink-0">
-                              {isHourAndHalf ? '1h 30m' : '1h'}
-                            </span>
                           </div>
                           <div className="text-[11px] text-slate-400 font-medium tabular-nums mt-0.5">
                             ${court.basePrice.toLocaleString('es-AR')}

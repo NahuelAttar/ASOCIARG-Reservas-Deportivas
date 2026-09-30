@@ -221,7 +221,7 @@ export const BookingDrawer: React.FC<BookingDrawerProps> = ({
                       Nueva Reserva
                     </h2>
                     <div className="text-xs font-semibold text-slate-500 mt-0.5">
-                      {startTime} a {formattedEndTime} hs ({durationText}) · {date}
+                      {startTime} a {formattedEndTime} hs · {date}
                     </div>
                   </div>
 
@@ -261,7 +261,7 @@ export const BookingDrawer: React.FC<BookingDrawerProps> = ({
                           }}
                           className="w-full mt-0.5 px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-900 focus:outline-none focus:border-[#0D5FAE]"
                         >
-                          <optgroup label="🎾 Pádel (Turnos de 1 hora y media)">
+                          <optgroup label="Pádel">
                             {courts
                               .filter((c) => c.sport === 'padel')
                               .map((c) => (
@@ -270,7 +270,7 @@ export const BookingDrawer: React.FC<BookingDrawerProps> = ({
                                 </option>
                               ))}
                           </optgroup>
-                          <optgroup label="⚽ Fútbol 7 (Turnos de 1 hora)">
+                          <optgroup label="Fútbol 7">
                             {courts
                               .filter((c) => c.sport === 'futbol')
                               .map((c) => (
@@ -279,7 +279,7 @@ export const BookingDrawer: React.FC<BookingDrawerProps> = ({
                                 </option>
                               ))}
                           </optgroup>
-                          <optgroup label="🎾 Tenis (Turnos de 1 hora y media)">
+                          <optgroup label="Tenis">
                             {courts
                               .filter((c) => c.sport === 'tenis')
                               .map((c) => (
@@ -292,12 +292,7 @@ export const BookingDrawer: React.FC<BookingDrawerProps> = ({
                       </div>
 
                       <div>
-                        <div className="flex items-center justify-between">
-                          <label className="text-[10px] text-slate-400 font-semibold">Horario inicio</label>
-                          <span className="text-[10px] text-[#0D5FAE] font-bold">
-                            {currentCourt?.sport === 'futbol' ? '1h' : '1h 30m'}
-                          </span>
-                        </div>
+                        <label className="text-[10px] text-slate-400 font-semibold">Horario inicio</label>
                         <input
                           type="time"
                           value={startTime}
@@ -485,7 +480,7 @@ export const BookingDrawer: React.FC<BookingDrawerProps> = ({
                       />
                     </div>
                     <span className="text-[10px] text-slate-400">
-                      Importe del turno ({durationText}). Se cobrará una vez finalizado el partido.
+                      Importe del turno. Se cobrará una vez finalizado el partido.
                     </span>
                   </div>
 

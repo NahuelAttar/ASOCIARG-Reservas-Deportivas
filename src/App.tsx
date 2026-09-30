@@ -3,6 +3,7 @@ import { Header } from './components/Header';
 import { AgendaView } from './components/AgendaView';
 import { ReservationsView } from './components/ReservationsView';
 import { BookingDrawer } from './components/BookingDrawer';
+import { PaymentModal } from './components/PaymentModal';
 import { BlockSlotModal } from './components/BlockSlotModal';
 import { BaseRatesModal } from './components/BaseRatesModal';
 import { Toast } from './components/Toast';
@@ -12,7 +13,7 @@ import {
   INITIAL_PEOPLE,
   INITIAL_RESERVATIONS,
 } from './data/mockData';
-import { Court, Person, Reservation, BlockReason } from './types';
+import { Court, Person, Reservation, BlockReason, PaymentMethod } from './types';
 
 export default function App() {
   const [currentTab, setCurrentTab] = useState<'agenda' | 'reservas'>('agenda');
@@ -29,6 +30,10 @@ export default function App() {
   const [selectedReservation, setSelectedReservation] = useState<Reservation | null>(null);
   const [prefillCourtId, setPrefillCourtId] = useState<string>('padel-1');
   const [prefillTime, setPrefillTime] = useState<string>('19:00');
+
+  // Dedicated Payment Modal state
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+  const [reservationToPay, setReservationToPay] = useState<Reservation | null>(null);
 
   // Utility modals
   const [isBlockModalOpen, setIsBlockModalOpen] = useState(false);
@@ -67,7 +72,52 @@ export default function App() {
     setIsDrawerOpen(true);
   };
 
+  // Open dedicated Payment Modal for a reservation
+  const handleOpenPaymentModal = (reservation: Reservation) => {
+    setReservationToPay(reservation);
+    setIsPaymentModalOpen(true);
+  };
+
+  // Confirm payment registration
+  const handleConfirmPayment = (
+    reservationId: string,
+    paymentMethod: PaymentMethod,
+    amount: number
+  ) => {
+    const paidAt = new Date().toISOString();
+
+    setReservations((prev) =>
+      prev.map((r) =>
+        r.id === reservationId
+          ? {
+              ...r,
+              paymentStatus: 'pagada',
+              paymentMethod,
+              paidAmount: amount,
+              paidAt,
+            }
+          : r
+      )
+    );
+
+    // Update selected reservation in drawer if open
+    setSelectedReservation((prev) =>
+      prev && prev.id === reservationId
+        ? {
+            ...prev,
+            paymentStatus: 'pagada',
+            paymentMethod,
+            paidAmount: amount,
+            paidAt,
+          }
+        : prev
+    );
+
+    showToast(`Cobro registrado: ${paymentMethod} · $${amount.toLocaleString('es-AR')}`);
+  };
+
   // Save or edit a reservation
+  // Al crear: Estado de reserva: Reservada, Estado de cobro: Pendiente, Importe inmutable guardado
   const handleSaveReservation = (data: Partial<Reservation> & { id?: string }) => {
     if (data.id) {
       // Editing existing reservation
@@ -76,21 +126,21 @@ export default function App() {
       );
       showToast('Reserva actualizada');
     } else {
-      // Creating new reservation
+      // Creating new reservation: No se pregunta pago, queda como Reservada y Pendiente de cobro
+      const targetCourt = courts.find((c) => c.id === data.courtId) || courts[0];
       const newRes: Reservation = {
         id: `res-${Date.now()}`,
-        courtId: data.courtId || 'padel-1',
-        courtName: data.courtName || 'Cancha',
-        sport: data.sport || 'padel',
+        courtId: data.courtId || targetCourt.id,
+        courtName: data.courtName || targetCourt.name,
+        sport: data.sport || targetCourt.sport,
         date: data.date || currentDate,
         startTime: data.startTime || '19:00',
         endTime: data.endTime || '20:00',
         person: data.person || people[0],
-        price: data.price || 12000,
-        suggestedPrice: data.suggestedPrice || 12000,
-        status: data.status || 'confirmada',
-        paymentStatus: data.paymentStatus || 'pagado',
-        paymentMethod: data.paymentMethod || 'Mercado Pago',
+        price: data.price || targetCourt.basePrice, // Importe histórico guardado
+        suggestedPrice: targetCourt.basePrice,
+        status: 'reservada',
+        paymentStatus: 'pendiente',
         notes: data.notes,
         createdAt: new Date().toISOString(),
       };
@@ -125,14 +175,6 @@ export default function App() {
     showToast('Marcado como "No se presentó"');
   };
 
-  // Mark as paid
-  const handleMarkPaid = (id: string) => {
-    setReservations(
-      reservations.map((r) => (r.id === id ? { ...r, paymentStatus: 'pagado' } : r))
-    );
-    showToast('Turno marcado como pagado');
-  };
-
   // Block a slot directly from agenda
   const handleConfirmBlock = (data: {
     courtId: string;
@@ -159,8 +201,7 @@ export default function App() {
       price: 0,
       suggestedPrice: 0,
       status: 'bloqueada',
-      paymentStatus: 'pagado',
-      paymentMethod: 'Otro',
+      paymentStatus: 'pagada',
       isBlocked: true,
       blockReason: data.reason,
       notes: data.notes,
@@ -171,17 +212,17 @@ export default function App() {
     showToast(`Cancha bloqueada por ${data.reason}`);
   };
 
-  // Update base rate for a court
+  // Update base rate for a court (NO altera las reservas ya creadas)
   const handleUpdateCourtPrice = (courtId: string, newPrice: number) => {
     setCourts(
       courts.map((c) => (c.id === courtId ? { ...c, basePrice: newPrice } : c))
     );
-    showToast('Precio base actualizado');
+    showToast('Tarifa base actualizada (reservas previas conservan su importe)');
   };
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col font-sans selection:bg-[#0D5FAE]/15 selection:text-[#0D5FAE]">
-      {/* Header focused strictly on sports reservations */}
+      {/* Header */}
       <Header
         currentTab={currentTab}
         onSelectTab={setCurrentTab}
@@ -208,6 +249,7 @@ export default function App() {
             reservations={reservations}
             courts={courts}
             onSelectReservation={handleSelectReservation}
+            onOpenPaymentModal={handleOpenPaymentModal}
           />
         )}
       </main>
@@ -226,7 +268,15 @@ export default function App() {
         onSaveReservation={handleSaveReservation}
         onCancelReservation={handleCancelReservation}
         onMarkNoShow={handleMarkNoShow}
-        onMarkPaid={handleMarkPaid}
+        onOpenPaymentModal={handleOpenPaymentModal}
+      />
+
+      {/* Dedicated Payment Modal: Cobrar Turno */}
+      <PaymentModal
+        isOpen={isPaymentModalOpen}
+        onClose={() => setIsPaymentModalOpen(false)}
+        reservation={reservationToPay}
+        onConfirmPayment={handleConfirmPayment}
       />
 
       {/* Quick Block Slot Modal */}

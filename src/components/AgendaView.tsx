@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Court, Reservation, SportType } from '../types';
+import { Court, Reservation, SportType, computeReservationStatus } from '../types';
 
 interface AgendaViewProps {
   courts: Court[];
@@ -338,7 +338,8 @@ export const AgendaView: React.FC<AgendaViewProps> = ({
 
                         if (res) {
                           const isBlocked = res.isBlocked;
-                          const isPending = res.paymentStatus === 'pendiente';
+                          const isPaid = res.paymentStatus === 'pagada';
+                          const timing = computeReservationStatus(res);
 
                           return (
                             <motion.button
@@ -349,7 +350,7 @@ export const AgendaView: React.FC<AgendaViewProps> = ({
                               className={`p-2 rounded-2xl border text-left flex flex-col justify-between transition-all cursor-pointer h-14 ${
                                 isBlocked
                                   ? 'bg-slate-100 border-slate-200 text-slate-500'
-                                  : isPending
+                                  : !isPaid
                                   ? 'bg-amber-50/70 border-amber-200/90 hover:border-amber-400 hover:shadow-xs'
                                   : 'bg-blue-50/70 border-blue-200/90 hover:border-blue-400 hover:shadow-xs'
                               }`}
@@ -360,11 +361,21 @@ export const AgendaView: React.FC<AgendaViewProps> = ({
                                 {isBlocked ? (
                                   <span className="material-symbols-outlined text-[13px] text-slate-400">lock</span>
                                 ) : (
-                                  <span
-                                    className={`w-1.5 h-1.5 rounded-full ${
-                                      isPending ? 'bg-amber-500' : 'bg-emerald-500'
-                                    }`}
-                                  />
+                                  <div className="flex items-center gap-1">
+                                    <span
+                                      className={`w-1.5 h-1.5 rounded-full ${
+                                        timing === 'en_juego'
+                                          ? 'bg-blue-500 animate-pulse'
+                                          : isPaid
+                                          ? 'bg-emerald-500'
+                                          : 'bg-amber-500'
+                                      }`}
+                                      title={timing === 'en_juego' ? 'En juego' : isPaid ? 'Pagada' : 'Pendiente'}
+                                    />
+                                    <span className="text-[9px] font-bold text-slate-400">
+                                      {timing === 'en_juego' ? 'En juego' : !isPaid ? 'Cobrar' : 'Pagado'}
+                                    </span>
+                                  </div>
                                 )}
                               </div>
                               <div className="text-xs font-bold text-slate-900 truncate">
@@ -477,7 +488,8 @@ export const AgendaView: React.FC<AgendaViewProps> = ({
 
                       if (res) {
                         const isBlocked = res.isBlocked;
-                        const isPending = res.paymentStatus === 'pendiente';
+                        const isPaid = res.paymentStatus === 'pagada';
+                        const timing = computeReservationStatus(res);
 
                         return (
                           <td
@@ -491,7 +503,7 @@ export const AgendaView: React.FC<AgendaViewProps> = ({
                               className={`w-full h-[40px] rounded-xl px-2.5 py-1 flex flex-col justify-between transition-all border text-left leading-none ${
                                 isBlocked
                                   ? 'bg-slate-100/90 border-slate-200 text-slate-700'
-                                  : isPending
+                                  : !isPaid
                                   ? 'bg-amber-50/90 border-amber-200 text-slate-900'
                                   : 'bg-blue-50/80 border-blue-200 text-slate-900'
                               }`}
@@ -502,13 +514,17 @@ export const AgendaView: React.FC<AgendaViewProps> = ({
                                 </span>
                                 <span
                                   className={`w-1.5 h-1.5 rounded-full ${
-                                    isPending ? 'bg-amber-500' : 'bg-emerald-500'
+                                    timing === 'en_juego'
+                                      ? 'bg-blue-500 animate-pulse'
+                                      : isPaid
+                                      ? 'bg-emerald-500'
+                                      : 'bg-amber-500'
                                   }`}
                                 />
                               </div>
                               <div className="flex items-center justify-between text-[10px] text-slate-500 font-medium">
                                 <span>{hour.slice(0, 2)}–{endHour.slice(0, 2)} hs</span>
-                                <span>{isPending ? 'Pendiente' : 'Pagado'}</span>
+                                <span>{isPaid ? 'Pagada' : 'Pendiente'}</span>
                               </div>
                             </motion.div>
                           </td>

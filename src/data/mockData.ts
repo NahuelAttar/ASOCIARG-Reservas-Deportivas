@@ -218,7 +218,7 @@ export const INITIAL_PEOPLE: Person[] = [
 ];
 
 export const INITIAL_RESERVATIONS: Reservation[] = [
-  // Cancha 1 Pádel
+  // Cancha 1 Pádel - 18:00 a 19:00 (Finalizada y ya Cobrada)
   {
     id: 'res-1',
     courtId: 'padel-1',
@@ -230,12 +230,15 @@ export const INITIAL_RESERVATIONS: Reservation[] = [
     person: INITIAL_PEOPLE[4], // Martín González
     price: 12000,
     suggestedPrice: 12000,
-    status: 'confirmada',
-    paymentStatus: 'pagado',
-    paymentMethod: 'Mercado Pago',
+    status: 'finalizada',
+    paymentStatus: 'pagada',
+    paymentMethod: 'QR / Mercado Pago',
+    paidAmount: 12000,
+    paidAt: '2024-10-30T19:05:00',
     notes: 'Alquila 2 paletas en recepción.',
     createdAt: '2024-10-30T10:00:00',
   },
+  // Cancha 1 Pádel - 20:00 a 21:00 (En juego - Pendiente de cobro)
   {
     id: 'res-7',
     courtId: 'padel-1',
@@ -247,13 +250,12 @@ export const INITIAL_RESERVATIONS: Reservation[] = [
     person: INITIAL_PEOPLE[0], // Juan Pérez
     price: 12000,
     suggestedPrice: 12000,
-    status: 'confirmada',
-    paymentStatus: 'pagado',
-    paymentMethod: 'Mercado Pago',
+    status: 'en_juego',
+    paymentStatus: 'pendiente',
     createdAt: '2024-10-30T09:15:00',
   },
 
-  // Cancha 2 Pádel
+  // Cancha 2 Pádel - 19:00 a 20:00 (Finalizada - Pendiente de cobro)
   {
     id: 'res-3',
     courtId: 'padel-2',
@@ -265,14 +267,13 @@ export const INITIAL_RESERVATIONS: Reservation[] = [
     person: INITIAL_PEOPLE[1], // Lucas Albarracín
     price: 12000,
     suggestedPrice: 12000,
-    status: 'confirmada',
+    status: 'finalizada',
     paymentStatus: 'pendiente',
-    paymentMethod: 'Efectivo',
-    notes: 'Abona seña al llegar.',
+    notes: 'Abona al salir de la cancha.',
     createdAt: '2024-10-30T11:00:00',
   },
 
-  // Cancha 3 Pádel
+  // Cancha 3 Pádel - 18:00 a 19:00 (Finalizada y Cobrada)
   {
     id: 'res-301',
     courtId: 'padel-3',
@@ -284,11 +285,14 @@ export const INITIAL_RESERVATIONS: Reservation[] = [
     person: INITIAL_PEOPLE[7], // Federico Santoro
     price: 12000,
     suggestedPrice: 12000,
-    status: 'confirmada',
-    paymentStatus: 'pagado',
-    paymentMethod: 'Mercado Pago',
+    status: 'finalizada',
+    paymentStatus: 'pagada',
+    paymentMethod: 'Efectivo',
+    paidAmount: 12000,
+    paidAt: '2024-10-30T19:02:00',
     createdAt: '2024-10-29T14:00:00',
   },
+  // Cancha 3 Pádel - 21:00 a 22:00 (Reservada por jugar - Pendiente)
   {
     id: 'res-302',
     courtId: 'padel-3',
@@ -300,13 +304,12 @@ export const INITIAL_RESERVATIONS: Reservation[] = [
     person: INITIAL_PEOPLE[6], // Carlos Méndez
     price: 12000,
     suggestedPrice: 12000,
-    status: 'confirmada',
+    status: 'reservada',
     paymentStatus: 'pendiente',
-    paymentMethod: 'Transferencia',
     createdAt: '2024-10-30T12:00:00',
   },
 
-  // Cancha 4 Pádel
+  // Cancha 4 Pádel - 20:00 a 21:00 (En juego - Pendiente)
   {
     id: 'res-401',
     courtId: 'padel-4',
@@ -318,13 +321,12 @@ export const INITIAL_RESERVATIONS: Reservation[] = [
     person: INITIAL_PEOPLE[3], // Carla Benítez
     price: 12000,
     suggestedPrice: 12000,
-    status: 'confirmada',
-    paymentStatus: 'pagado',
-    paymentMethod: 'Efectivo',
+    status: 'en_juego',
+    paymentStatus: 'pendiente',
     createdAt: '2024-10-29T18:00:00',
   },
 
-  // Cancha 5 Pádel
+  // Cancha 5 Pádel - 19:00 a 20:00 (Finalizada y Cobrada)
   {
     id: 'res-501',
     courtId: 'padel-5',
@@ -336,13 +338,15 @@ export const INITIAL_RESERVATIONS: Reservation[] = [
     person: INITIAL_PEOPLE[5], // Matías Rossi
     price: 10000,
     suggestedPrice: 10000,
-    status: 'confirmada',
-    paymentStatus: 'pagado',
-    paymentMethod: 'Mercado Pago',
+    status: 'finalizada',
+    paymentStatus: 'pagada',
+    paymentMethod: 'Transferencia',
+    paidAmount: 10000,
+    paidAt: '2024-10-30T20:10:00',
     createdAt: '2024-10-30T10:30:00',
   },
 
-  // Cancha 6 Pádel - Mantenimiento
+  // Cancha 6 Pádel - Mantenimiento (Bloqueada)
   {
     id: 'res-601',
     courtId: 'padel-6',
@@ -360,15 +364,14 @@ export const INITIAL_RESERVATIONS: Reservation[] = [
     price: 0,
     suggestedPrice: 0,
     status: 'bloqueada',
-    paymentStatus: 'pagado',
-    paymentMethod: 'Otro',
+    paymentStatus: 'pagada',
     isBlocked: true,
     blockReason: 'Mantenimiento',
     notes: 'Cambio de reflectores LED en torre 2.',
     createdAt: '2024-10-30T08:00:00',
   },
 
-  // Cancha 7 Pádel
+  // Cancha 7 Pádel - 20:00 a 21:00 (En juego - Pendiente)
   {
     id: 'res-701',
     courtId: 'padel-7',
@@ -380,13 +383,12 @@ export const INITIAL_RESERVATIONS: Reservation[] = [
     person: INITIAL_PEOPLE[2], // Gonzalo Morales
     price: 12000,
     suggestedPrice: 12000,
-    status: 'confirmada',
-    paymentStatus: 'pagado',
-    paymentMethod: 'Mercado Pago',
+    status: 'en_juego',
+    paymentStatus: 'pendiente',
     createdAt: '2024-10-30T14:00:00',
   },
 
-  // Cancha 8 Pádel
+  // Cancha 8 Pádel - 21:00 a 22:00 (Reservada)
   {
     id: 'res-801',
     courtId: 'padel-8',
@@ -398,9 +400,8 @@ export const INITIAL_RESERVATIONS: Reservation[] = [
     person: INITIAL_PEOPLE[0], // Juan Pérez
     price: 10000,
     suggestedPrice: 10000,
-    status: 'confirmada',
-    paymentStatus: 'pagado',
-    paymentMethod: 'Mercado Pago',
+    status: 'reservada',
+    paymentStatus: 'pendiente',
     createdAt: '2024-10-30T15:00:00',
   },
 
@@ -416,9 +417,11 @@ export const INITIAL_RESERVATIONS: Reservation[] = [
     person: INITIAL_PEOPLE[1], // Lucas Albarracín
     price: 25000,
     suggestedPrice: 25000,
-    status: 'confirmada',
-    paymentStatus: 'pendiente',
+    status: 'finalizada',
+    paymentStatus: 'pagada',
     paymentMethod: 'Transferencia',
+    paidAmount: 25000,
+    paidAt: '2024-10-30T20:15:00',
     createdAt: '2024-10-30T11:20:00',
   },
   {
@@ -432,9 +435,8 @@ export const INITIAL_RESERVATIONS: Reservation[] = [
     person: INITIAL_PEOPLE[8], // Equipo Los Amigos
     price: 37500,
     suggestedPrice: 37500,
-    status: 'confirmada',
+    status: 'reservada',
     paymentStatus: 'pendiente',
-    paymentMethod: 'Efectivo',
     notes: 'Turno extendido 1.5hs.',
     createdAt: '2024-10-30T16:00:00',
   },
@@ -451,9 +453,8 @@ export const INITIAL_RESERVATIONS: Reservation[] = [
     person: INITIAL_PEOPLE[2], // Gonzalo Morales
     price: 14000,
     suggestedPrice: 14000,
-    status: 'confirmada',
-    paymentStatus: 'pagado',
-    paymentMethod: 'Efectivo',
+    status: 'en_juego',
+    paymentStatus: 'pendiente',
     createdAt: '2024-10-30T14:30:00',
   },
   {
@@ -473,8 +474,7 @@ export const INITIAL_RESERVATIONS: Reservation[] = [
     price: 0,
     suggestedPrice: 0,
     status: 'bloqueada',
-    paymentStatus: 'pagado',
-    paymentMethod: 'Otro',
+    paymentStatus: 'pagada',
     isBlocked: true,
     blockReason: 'Mantenimiento',
     notes: 'Riego nocturno de polvo.',

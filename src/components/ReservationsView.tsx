@@ -1,20 +1,22 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Reservation, Court } from '../types';
+import { Reservation, Court, computeReservationStatus } from '../types';
 
 interface ReservationsViewProps {
   reservations: Reservation[];
   courts: Court[];
   onSelectReservation: (reservation: Reservation) => void;
+  onOpenPaymentModal?: (reservation: Reservation) => void;
 }
 
 export const ReservationsView: React.FC<ReservationsViewProps> = ({
   reservations,
   courts,
   onSelectReservation,
+  onOpenPaymentModal,
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'all' | 'pagado' | 'pendiente'>('all');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'pagada' | 'pendiente'>('all');
   const [dateFilter, setDateFilter] = useState<'all' | 'today' | 'upcoming'>('today');
 
   // Filter reservations
@@ -43,6 +45,29 @@ export const ReservationsView: React.FC<ReservationsViewProps> = ({
     return true;
   });
 
+  // Métricas de Recaudación (Cálculo derivado directamente de las reservas deportivas)
+  const paidReservations = filtered.filter((r) => r.paymentStatus === 'pagada' && !r.isBlocked);
+  const pendingReservations = filtered.filter((r) => r.paymentStatus === 'pendiente' && !r.isBlocked);
+
+  const totalCollected = paidReservations.reduce((acc, r) => acc + (r.paidAmount || r.price), 0);
+  const totalPending = pendingReservations.reduce((acc, r) => acc + r.price, 0);
+
+  const collectedEfectivo = paidReservations
+    .filter((r) => r.paymentMethod === 'Efectivo')
+    .reduce((acc, r) => acc + (r.paidAmount || r.price), 0);
+
+  const collectedTransferencia = paidReservations
+    .filter((r) => r.paymentMethod === 'Transferencia')
+    .reduce((acc, r) => acc + (r.paidAmount || r.price), 0);
+
+  const collectedQR = paidReservations
+    .filter((r) => r.paymentMethod === 'QR / Mercado Pago')
+    .reduce((acc, r) => acc + (r.paidAmount || r.price), 0);
+
+  const collectedOtro = paidReservations
+    .filter((r) => r.paymentMethod === 'Otro')
+    .reduce((acc, r) => acc + (r.paidAmount || r.price), 0);
+
   return (
     <div className="flex flex-col gap-4 max-w-4xl mx-auto w-full py-2">
       {/* Search & Filter Header (Fudo Style) */}
@@ -57,7 +82,7 @@ export const ReservationsView: React.FC<ReservationsViewProps> = ({
                 Listado y Búsqueda de Reservas
               </h2>
               <span className="text-[11px] text-slate-400 font-medium">
-                Gestión operativa y cobranzas
+                Gestión de turnos y cobranzas
               </span>
             </div>
           </div>
@@ -130,7 +155,7 @@ export const ReservationsView: React.FC<ReservationsViewProps> = ({
               {(
                 [
                   { id: 'all', label: 'Todos' },
-                  { id: 'pagado', label: 'Pagadas' },
+                  { id: 'pagada', label: 'Pagadas' },
                   { id: 'pendiente', label: 'Pendientes' },
                 ] as const
               ).map((f) => (
@@ -139,7 +164,7 @@ export const ReservationsView: React.FC<ReservationsViewProps> = ({
                   onClick={() => setStatusFilter(f.id)}
                   className={`relative z-10 px-3.5 py-1 rounded-full transition-colors cursor-pointer ${
                     statusFilter === f.id
-                      ? f.id === 'pagado'
+                      ? f.id === 'pagada'
                         ? 'text-white font-bold'
                         : f.id === 'pendiente'
                         ? 'text-white font-bold'
@@ -151,7 +176,7 @@ export const ReservationsView: React.FC<ReservationsViewProps> = ({
                     <motion.div
                       layoutId="activeResStatusFilter"
                       className={`absolute inset-0 rounded-full shadow-xs z-[-1] ${
-                        f.id === 'pagado'
+                        f.id === 'pagada'
                           ? 'bg-emerald-600'
                           : f.id === 'pendiente'
                           ? 'bg-amber-500'
@@ -165,6 +190,44 @@ export const ReservationsView: React.FC<ReservationsViewProps> = ({
               ))}
             </div>
           </div>
+        </div>
+
+        {/* Resumen de Recaudación en vivo derivado de las reservas */}
+        <div className="pt-2 border-t border-slate-100 flex items-center justify-between gap-3 flex-wrap text-xs">
+          <div className="flex items-center gap-3 flex-wrap">
+            <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+              Recaudación:
+            </span>
+            <span className="font-extrabold text-slate-900 tabular-nums">
+              Total cobrado: <strong className="text-emerald-700">${totalCollected.toLocaleString('es-AR')}</strong>
+            </span>
+            {collectedEfectivo > 0 && (
+              <span className="text-slate-500 font-medium tabular-nums">
+                · Efectivo: ${collectedEfectivo.toLocaleString('es-AR')}
+              </span>
+            )}
+            {collectedTransferencia > 0 && (
+              <span className="text-slate-500 font-medium tabular-nums">
+                · Transf.: ${collectedTransferencia.toLocaleString('es-AR')}
+              </span>
+            )}
+            {collectedQR > 0 && (
+              <span className="text-slate-500 font-medium tabular-nums">
+                · QR/MP: ${collectedQR.toLocaleString('es-AR')}
+              </span>
+            )}
+            {collectedOtro > 0 && (
+              <span className="text-slate-500 font-medium tabular-nums">
+                · Otro: ${collectedOtro.toLocaleString('es-AR')}
+              </span>
+            )}
+          </div>
+
+          {totalPending > 0 && (
+            <div className="text-[11px] font-bold text-amber-800 bg-amber-50 px-2.5 py-0.5 rounded-full border border-amber-200">
+              Pendiente: ${totalPending.toLocaleString('es-AR')} ({pendingReservations.length})
+            </div>
+          )}
         </div>
       </div>
 
@@ -182,8 +245,9 @@ export const ReservationsView: React.FC<ReservationsViewProps> = ({
             </motion.div>
           ) : (
             filtered.map((r, index) => {
-              const isPaid = r.paymentStatus === 'pagado';
+              const isPaid = r.paymentStatus === 'pagada';
               const isToday = r.date === '2024-10-30';
+              const timing = computeReservationStatus(r);
 
               return (
                 <motion.div
@@ -213,6 +277,22 @@ export const ReservationsView: React.FC<ReservationsViewProps> = ({
                             Socio #{r.person.memberNumber}
                           </span>
                         )}
+                        {/* Estado conceptual del turno */}
+                        <span
+                          className={`text-[10px] font-bold px-2 py-0.2 rounded-full ${
+                            timing === 'en_juego'
+                              ? 'bg-blue-100 text-[#0D5FAE] animate-pulse'
+                              : timing === 'finalizada'
+                              ? 'bg-slate-100 text-slate-600'
+                              : 'bg-emerald-50 text-emerald-800'
+                          }`}
+                        >
+                          {timing === 'en_juego'
+                            ? 'En juego'
+                            : timing === 'finalizada'
+                            ? 'Finalizada'
+                            : 'Reservada'}
+                        </span>
                       </div>
 
                       <div className="text-xs text-slate-500 font-medium">
@@ -229,7 +309,7 @@ export const ReservationsView: React.FC<ReservationsViewProps> = ({
                   </div>
 
                   {/* Date, Time & Status */}
-                  <div className="flex items-center justify-between sm:justify-end gap-4 shrink-0 border-t sm:border-t-0 pt-2 sm:pt-0 border-slate-100">
+                  <div className="flex items-center justify-between sm:justify-end gap-3 shrink-0 border-t sm:border-t-0 pt-2 sm:pt-0 border-slate-100">
                     <div className="flex flex-col sm:items-end">
                       <div className="font-bold text-xs text-slate-900 tabular-nums">
                         {isToday ? 'Hoy' : r.date} · {r.startTime} a {r.endTime} hs
@@ -240,20 +320,34 @@ export const ReservationsView: React.FC<ReservationsViewProps> = ({
                     </div>
 
                     <div className="flex items-center gap-2">
-                      <span
-                        className={`inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1 rounded-full ${
-                          isPaid
-                            ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
-                            : 'bg-amber-50 text-amber-800 border border-amber-200'
-                        }`}
-                      >
-                        <span
-                          className={`w-1.5 h-1.5 rounded-full ${
-                            isPaid ? 'bg-emerald-500' : 'bg-amber-500'
-                          }`}
-                        />
-                        <span>{isPaid ? 'Pagado' : 'Seña pend.'}</span>
-                      </span>
+                      {isPaid ? (
+                        <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                          <span>Pagada · {r.paymentMethod || 'Efectivo'}</span>
+                        </span>
+                      ) : (
+                        <div className="flex items-center gap-2">
+                          <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full bg-amber-50 text-amber-800 border border-amber-200">
+                            <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                            <span>Pendiente</span>
+                          </span>
+
+                          {onOpenPaymentModal && (
+                            <motion.button
+                              whileHover={{ scale: 1.05 }}
+                              whileTap={{ scale: 0.95 }}
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onOpenPaymentModal(r);
+                              }}
+                              className="px-3 py-1 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs shadow-xs transition-colors cursor-pointer"
+                            >
+                              Cobrar turno
+                            </motion.button>
+                          )}
+                        </div>
+                      )}
 
                       <span className="material-symbols-outlined text-slate-300 group-hover:text-slate-600 text-[18px] transition-colors">
                         chevron_right

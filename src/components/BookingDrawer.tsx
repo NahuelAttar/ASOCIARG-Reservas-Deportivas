@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Court, Person, Reservation, ReservationStatus, PaymentStatus, PaymentMethod } from '../types';
+import { Court, Person, Reservation, ReservationStatus, PaymentStatus, computeReservationStatus } from '../types';
 
 interface BookingDrawerProps {
   isOpen: boolean;
@@ -15,7 +15,7 @@ interface BookingDrawerProps {
   onSaveReservation: (data: Partial<Reservation> & { id?: string }) => void;
   onCancelReservation?: (id: string) => void;
   onMarkNoShow?: (id: string) => void;
-  onMarkPaid?: (id: string) => void;
+  onOpenPaymentModal?: (reservation: Reservation) => void;
 }
 
 export const BookingDrawer: React.FC<BookingDrawerProps> = ({
@@ -31,7 +31,7 @@ export const BookingDrawer: React.FC<BookingDrawerProps> = ({
   onSaveReservation,
   onCancelReservation,
   onMarkNoShow,
-  onMarkPaid,
+  onOpenPaymentModal,
 }) => {
   // Slot selection
   const [courtId, setCourtId] = useState<string>(prefillCourtId || courts[0]?.id || 'padel-1');
@@ -48,13 +48,8 @@ export const BookingDrawer: React.FC<BookingDrawerProps> = ({
   const [newPhone, setNewPhone] = useState<string>('');
   const [newDni, setNewDni] = useState<string>('');
 
-  // Editable tariff
+  // Editable tariff (stored historically in the reservation)
   const [price, setPrice] = useState<number>(12000);
-
-  // Status & payment
-  const [status, setStatus] = useState<ReservationStatus>('confirmada');
-  const [paymentStatus, setPaymentStatus] = useState<PaymentStatus>('pagado');
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('Mercado Pago');
   const [notes, setNotes] = useState<string>('');
 
   // Sync state on drawer open
@@ -64,9 +59,6 @@ export const BookingDrawer: React.FC<BookingDrawerProps> = ({
       setDate(reservation.date);
       setStartTime(reservation.startTime);
       setPrice(reservation.price);
-      setStatus(reservation.status);
-      setPaymentStatus(reservation.paymentStatus);
-      setPaymentMethod(reservation.paymentMethod);
       setNotes(reservation.notes || '');
       setSelectedPersonId(reservation.person.id);
       setNewName(reservation.person.name);
@@ -80,9 +72,6 @@ export const BookingDrawer: React.FC<BookingDrawerProps> = ({
       setDate(prefillDate || '2024-10-30');
       setStartTime(prefillTime || '19:00');
       setPrice(activeCourt ? activeCourt.basePrice : 12000);
-      setStatus('confirmada');
-      setPaymentStatus('pagado');
-      setPaymentMethod('Mercado Pago');
       setNotes('');
       setPersonMode('search');
       setSelectedPersonId(people[0]?.id || '');
@@ -126,6 +115,7 @@ export const BookingDrawer: React.FC<BookingDrawerProps> = ({
   const endH = startH + 1;
   const formattedEndTime = `${endH.toString().padStart(2, '0')}:00`;
 
+  // Submit new reservation: Al confirmar, queda en estado Reservada y cobro Pendiente
   const handleSubmitNew = (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -156,11 +146,24 @@ export const BookingDrawer: React.FC<BookingDrawerProps> = ({
       person: personObj,
       price: Number(price) || suggestedPrice,
       suggestedPrice,
-      status,
-      paymentStatus,
-      paymentMethod,
+      status: 'reservada',
+      paymentStatus: 'pendiente',
       notes,
     });
+  };
+
+  // Determinar estado de juego conceptual
+  const computedStatus = reservation ? computeReservationStatus(reservation) : 'reservada';
+
+  // Format payment date
+  const formatPaidAt = (dateStr?: string) => {
+    if (!dateStr) return '';
+    try {
+      const d = new Date(dateStr);
+      return d.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' }) + ' hs';
+    } catch {
+      return dateStr;
+    }
   };
 
   return (
@@ -186,9 +189,9 @@ export const BookingDrawer: React.FC<BookingDrawerProps> = ({
             className="fixed inset-y-0 right-0 w-full max-w-md bg-white shadow-2xl z-50 flex flex-col justify-between overflow-hidden sm:rounded-l-3xl border-l border-slate-200/90"
           >
             {mode === 'new' ? (
-              /* ========================================= */
-              /* CREAR RESERVA - FUDO ORDER FLOW           */
-              /* ========================================= */
+              /* ========================================================= */
+              /* 1. CREAR RESERVA - FLUJO REAL: SIN PREGUNTAR PAGO          */
+              /* ========================================================= */
               <form onSubmit={handleSubmitNew} className="flex-1 flex flex-col justify-between overflow-hidden">
                 {/* Header */}
                 <div className="px-6 py-5 border-b border-slate-100 flex items-start justify-between bg-slate-50/70">
@@ -199,7 +202,7 @@ export const BookingDrawer: React.FC<BookingDrawerProps> = ({
                       <span>{currentCourt?.name}</span>
                     </div>
                     <h2 className="text-lg font-extrabold text-slate-900 mt-0.5 tracking-tight">
-                      Confirmar Reserva
+                      Nueva Reserva
                     </h2>
                     <div className="text-xs font-semibold text-slate-500 mt-0.5">
                       {startTime} a {formattedEndTime} hs · {date}
@@ -405,18 +408,18 @@ export const BookingDrawer: React.FC<BookingDrawerProps> = ({
                     )}
                   </div>
 
-                  {/* 3. Tarifa y Forma de Pago */}
-                  <div className="flex flex-col gap-3 p-3.5 bg-slate-50 rounded-2xl border border-slate-200/80">
+                  {/* 3. Importe del turno (Guardado inmutablemente en la reserva) */}
+                  <div className="flex flex-col gap-2.5 p-3.5 bg-slate-50 rounded-2xl border border-slate-200/80">
                     <div className="flex items-center justify-between">
                       <span className="text-[11px] font-bold uppercase tracking-wider text-slate-700">
-                        Precio y Pago
+                        Precio del Turno
                       </span>
                       <button
                         type="button"
                         onClick={() => setPrice(suggestedPrice)}
                         className="text-[11px] text-[#0D5FAE] hover:underline font-medium cursor-pointer"
                       >
-                        Restablecer: ${suggestedPrice.toLocaleString('es-AR')}
+                        Tarifa base: ${suggestedPrice.toLocaleString('es-AR')}
                       </button>
                     </div>
 
@@ -429,58 +432,27 @@ export const BookingDrawer: React.FC<BookingDrawerProps> = ({
                         className="w-full bg-white px-3 py-2 rounded-xl border border-slate-300 font-extrabold text-base text-slate-900 focus:outline-none focus:border-[#0D5FAE] tabular-nums"
                       />
                     </div>
+                    <span className="text-[10px] text-slate-400">
+                      Este importe quedará registrado en la reserva. Se cobrará una vez jugado el turno.
+                    </span>
+                  </div>
 
-                    {/* Payment status toggle */}
-                    <div className="grid grid-cols-2 p-0.5 bg-slate-200/70 rounded-full text-xs font-medium mt-1">
-                      <button
-                        type="button"
-                        onClick={() => setPaymentStatus('pagado')}
-                        className={`py-1.5 rounded-full transition-all cursor-pointer ${
-                          paymentStatus === 'pagado'
-                            ? 'bg-emerald-600 text-white font-bold shadow-2xs'
-                            : 'text-slate-600'
-                        }`}
-                      >
-                        Turno Pagado
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setPaymentStatus('pendiente')}
-                        className={`py-1.5 rounded-full transition-all cursor-pointer ${
-                          paymentStatus === 'pendiente'
-                            ? 'bg-amber-500 text-white font-bold shadow-2xs'
-                            : 'text-slate-600'
-                        }`}
-                      >
-                        Seña Pendiente
-                      </button>
-                    </div>
-
-                    {/* Payment method */}
-                    {paymentStatus === 'pagado' && (
-                      <div className="grid grid-cols-3 gap-1.5 mt-1">
-                        {(['Mercado Pago', 'Efectivo', 'Transferencia'] as PaymentMethod[]).map(
-                          (m) => (
-                            <button
-                              key={m}
-                              type="button"
-                              onClick={() => setPaymentMethod(m)}
-                              className={`py-1.5 px-2 rounded-xl text-xs font-medium transition-all cursor-pointer text-center truncate ${
-                                paymentMethod === m
-                                  ? 'bg-slate-900 text-white font-bold'
-                                  : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'
-                              }`}
-                            >
-                              {m}
-                            </button>
-                          )
-                        )}
-                      </div>
-                    )}
+                  {/* 4. Notas opcionales */}
+                  <div className="flex flex-col gap-1">
+                    <label className="text-[10px] font-bold uppercase text-slate-500">
+                      Observaciones (opcional)
+                    </label>
+                    <input
+                      type="text"
+                      value={notes}
+                      onChange={(e) => setNotes(e.target.value)}
+                      placeholder="Ej: Alquila paletas, solicita iluminación..."
+                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:border-[#0D5FAE] focus:bg-white"
+                    />
                   </div>
                 </div>
 
-                {/* Footer with Fudo checkout button */}
+                {/* Footer: Confirmar reserva (sin cobrar) */}
                 <div className="p-5 border-t border-slate-100 flex items-center gap-3 bg-slate-50/70">
                   <motion.button
                     whileTap={{ scale: 0.96 }}
@@ -503,18 +475,44 @@ export const BookingDrawer: React.FC<BookingDrawerProps> = ({
                 </div>
               </form>
             ) : (
-              /* ========================================= */
-              /* DETALLE DE RESERVA                        */
-              /* ========================================= */
+              /* ========================================================= */
+              /* 2. DETALLE DE RESERVA - CON ESTADOS SEPARADOS Y COBRANZA  */
+              /* ========================================================= */
               reservation && (
                 <div className="flex-1 flex flex-col justify-between overflow-hidden">
                   {/* Header */}
                   <div className="px-6 py-5 border-b border-slate-100 flex items-start justify-between bg-slate-50/70">
                     <div>
-                      <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                        Ficha de Reserva
-                      </span>
-                      <h2 className="text-lg font-extrabold text-slate-900 mt-0.5 tracking-tight">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                          Ficha de Reserva
+                        </span>
+                        {/* Estado conceptual de la reserva */}
+                        <span
+                          className={`text-[10px] font-extrabold px-2.5 py-0.5 rounded-full uppercase tracking-wider ${
+                            computedStatus === 'en_juego'
+                              ? 'bg-blue-100 text-[#0D5FAE] animate-pulse'
+                              : computedStatus === 'finalizada'
+                              ? 'bg-slate-200 text-slate-700'
+                              : computedStatus === 'cancelada'
+                              ? 'bg-red-100 text-red-700'
+                              : computedStatus === 'no_asistio'
+                              ? 'bg-rose-100 text-rose-700'
+                              : 'bg-emerald-100 text-emerald-800'
+                          }`}
+                        >
+                          {computedStatus === 'en_juego'
+                            ? 'En juego'
+                            : computedStatus === 'finalizada'
+                            ? 'Finalizada'
+                            : computedStatus === 'cancelada'
+                            ? 'Cancelada'
+                            : computedStatus === 'no_asistio'
+                            ? 'No se presentó'
+                            : 'Reservada'}
+                        </span>
+                      </div>
+                      <h2 className="text-lg font-extrabold text-slate-900 mt-1 tracking-tight">
                         {reservation.courtName}
                       </h2>
                       <div className="text-xs font-semibold text-slate-500 mt-0.5 tabular-nums">
@@ -539,7 +537,7 @@ export const BookingDrawer: React.FC<BookingDrawerProps> = ({
                     {/* Persona */}
                     <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200/80 flex flex-col gap-1.5">
                       <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                        Jugador / Cliente
+                        Jugador / Reservante
                       </span>
                       <div className="flex items-center justify-between">
                         <span className="text-base font-bold text-slate-900">
@@ -556,57 +554,105 @@ export const BookingDrawer: React.FC<BookingDrawerProps> = ({
                       </div>
                     </div>
 
-                    {/* Tarifa & Pago */}
+                    {/* Importe & Estado de Cobro */}
                     <div className="grid grid-cols-2 gap-3">
                       <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200/80 flex flex-col gap-1">
                         <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                          Tarifa
+                          Importe del Turno
                         </span>
                         <span className="text-lg font-extrabold text-slate-900 tabular-nums">
                           ${reservation.price.toLocaleString('es-AR')}
                         </span>
                         <span className="text-[11px] text-slate-500">
-                          {reservation.paymentMethod}
+                          {reservation.paymentStatus === 'pagada' && reservation.paymentMethod
+                            ? `Medio: ${reservation.paymentMethod}`
+                            : 'Pendiente de cobro'}
                         </span>
                       </div>
 
-                      <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200/80 flex flex-col gap-1">
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                          Estado
-                        </span>
-                        <div className="flex items-center gap-1.5 mt-0.5">
-                          <span
-                            className={`w-2.5 h-2.5 rounded-full ${
-                              reservation.paymentStatus === 'pagado'
-                                ? 'bg-emerald-500'
-                                : 'bg-amber-500'
-                            }`}
-                          />
-                          <span
-                            className={`text-xs font-bold ${
-                              reservation.paymentStatus === 'pagado'
-                                ? 'text-emerald-800'
-                                : 'text-amber-800'
-                            }`}
-                          >
-                            {reservation.paymentStatus === 'pagado' ? 'Pagado' : 'Seña pendiente'}
+                      <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200/80 flex flex-col justify-between gap-1">
+                        <div>
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                            Estado de Cobro
                           </span>
+                          <div className="flex items-center gap-1.5 mt-0.5">
+                            <span
+                              className={`w-2.5 h-2.5 rounded-full ${
+                                reservation.paymentStatus === 'pagada'
+                                  ? 'bg-emerald-500'
+                                  : 'bg-amber-500'
+                              }`}
+                            />
+                            <span
+                              className={`text-xs font-bold ${
+                                reservation.paymentStatus === 'pagada'
+                                  ? 'text-emerald-800'
+                                  : 'text-amber-800'
+                              }`}
+                            >
+                              {reservation.paymentStatus === 'pagada' ? 'Pagada' : 'Pendiente'}
+                            </span>
+                          </div>
                         </div>
 
-                        {reservation.paymentStatus === 'pendiente' && onMarkPaid && (
-                          <button
-                            type="button"
-                            onClick={() => {
-                              onMarkPaid(reservation.id);
-                              onClose();
-                            }}
-                            className="text-xs font-bold text-[#0D5FAE] hover:underline mt-1 text-left cursor-pointer"
-                          >
-                            ✓ Marcar como pagado
-                          </button>
+                        {reservation.paymentStatus === 'pagada' && (
+                          <div className="text-[10px] text-slate-400 font-medium">
+                            {formatPaidAt(reservation.paidAt)}
+                          </div>
                         )}
                       </div>
                     </div>
+
+                    {/* ACCIÓN CONTEXTUAL: COBRAR TURNO (Si está pendiente) */}
+                    {reservation.paymentStatus === 'pendiente' && onOpenPaymentModal && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 5 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="p-3.5 bg-emerald-50/70 border border-emerald-300 rounded-2xl flex items-center justify-between gap-3 shadow-2xs"
+                      >
+                        <div>
+                          <div className="font-extrabold text-emerald-950 text-xs flex items-center gap-1.5">
+                            <span className="material-symbols-outlined text-[16px] text-emerald-700">
+                              point_of_sale
+                            </span>
+                            <span>Turno listo para cobrar</span>
+                          </div>
+                          <div className="text-[11px] text-emerald-700 font-medium mt-0.5">
+                            Total a cobrar: <strong>${reservation.price.toLocaleString('es-AR')}</strong>
+                          </div>
+                        </div>
+
+                        <motion.button
+                          whileHover={{ scale: 1.03 }}
+                          whileTap={{ scale: 0.96 }}
+                          type="button"
+                          onClick={() => {
+                            onClose();
+                            onOpenPaymentModal(reservation);
+                          }}
+                          className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs rounded-full shadow-xs cursor-pointer transition-colors whitespace-nowrap"
+                        >
+                          Cobrar turno
+                        </motion.button>
+                      </motion.div>
+                    )}
+
+                    {/* Registro de Cobro si ya fue pagada */}
+                    {reservation.paymentStatus === 'pagada' && (
+                      <div className="p-3.5 bg-slate-50 border border-slate-200/80 rounded-2xl flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold shrink-0">
+                          <span className="material-symbols-outlined text-[18px]">verified</span>
+                        </div>
+                        <div className="text-xs">
+                          <div className="font-extrabold text-slate-900">
+                            Pagado · {reservation.paymentMethod || 'Efectivo'} · ${reservation.price.toLocaleString('es-AR')}
+                          </div>
+                          <div className="text-[11px] text-slate-400 font-medium">
+                            Cobranza registrada correctamente
+                          </div>
+                        </div>
+                      </div>
+                    )}
 
                     {/* WhatsApp Quick Message Action */}
                     {cleanPhone && (

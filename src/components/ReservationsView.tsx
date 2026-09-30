@@ -64,6 +64,10 @@ export const ReservationsView: React.FC<ReservationsViewProps> = ({
     .filter((r) => r.paymentMethod === 'QR / Mercado Pago')
     .reduce((acc, r) => acc + (r.paidAmount || r.price), 0);
 
+  const collectedTarjeta = paidReservations
+    .filter((r) => r.paymentMethod === 'Tarjeta')
+    .reduce((acc, r) => acc + (r.paidAmount || r.price), 0);
+
   const collectedOtro = paidReservations
     .filter((r) => r.paymentMethod === 'Otro')
     .reduce((acc, r) => acc + (r.paidAmount || r.price), 0);
@@ -216,6 +220,11 @@ export const ReservationsView: React.FC<ReservationsViewProps> = ({
                 · QR/MP: ${collectedQR.toLocaleString('es-AR')}
               </span>
             )}
+            {collectedTarjeta > 0 && (
+              <span className="text-slate-500 font-medium tabular-nums">
+                · Tarjeta: ${collectedTarjeta.toLocaleString('es-AR')}
+              </span>
+            )}
             {collectedOtro > 0 && (
               <span className="text-slate-500 font-medium tabular-nums">
                 · Otro: ${collectedOtro.toLocaleString('es-AR')}
@@ -323,7 +332,12 @@ export const ReservationsView: React.FC<ReservationsViewProps> = ({
                       {isPaid ? (
                         <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200">
                           <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                          <span>Pagada · {r.paymentMethod || 'Efectivo'}</span>
+                          <span>
+                            Pagada ·{' '}
+                            {r.paymentMethod === 'Otro' && r.customPaymentMethod
+                              ? `Otro: ${r.customPaymentMethod}`
+                              : r.paymentMethod || 'Efectivo'}
+                          </span>
                         </span>
                       ) : (
                         <div className="flex items-center gap-2">

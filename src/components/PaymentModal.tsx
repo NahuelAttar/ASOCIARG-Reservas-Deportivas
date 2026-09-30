@@ -6,7 +6,12 @@ interface PaymentModalProps {
   isOpen: boolean;
   onClose: () => void;
   reservation: Reservation | null;
-  onConfirmPayment: (reservationId: string, paymentMethod: PaymentMethod, amount: number) => void;
+  onConfirmPayment: (
+    reservationId: string,
+    paymentMethod: PaymentMethod,
+    amount: number,
+    customPaymentMethod?: string
+  ) => void;
 }
 
 export const PaymentModal: React.FC<PaymentModalProps> = ({
@@ -16,13 +21,15 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
   onConfirmPayment,
 }) => {
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('Efectivo');
+  const [customMethodText, setCustomMethodText] = useState<string>('');
   const [amount, setAmount] = useState<number>(reservation?.price || 12000);
 
-  // Sync amount when reservation opens
+  // Sync state when reservation opens
   React.useEffect(() => {
     if (reservation) {
       setAmount(reservation.price);
       setPaymentMethod('Efectivo');
+      setCustomMethodText('');
     }
   }, [reservation]);
 
@@ -30,7 +37,16 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onConfirmPayment(reservation.id, paymentMethod, Number(amount) || reservation.price);
+    if (paymentMethod === 'Otro' && !customMethodText.trim()) {
+      alert('Por favor especificá el medio de pago.');
+      return;
+    }
+    onConfirmPayment(
+      reservation.id,
+      paymentMethod,
+      Number(amount) || reservation.price,
+      paymentMethod === 'Otro' ? customMethodText.trim() : undefined
+    );
     onClose();
   };
 
@@ -38,7 +54,8 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
     { id: 'Efectivo', label: 'Efectivo', icon: 'payments' },
     { id: 'Transferencia', label: 'Transferencia', icon: 'account_balance' },
     { id: 'QR / Mercado Pago', label: 'QR / Mercado Pago', icon: 'qr_code_scanner' },
-    { id: 'Otro', label: 'Otro', icon: 'credit_card' },
+    { id: 'Tarjeta', label: 'Tarjeta', icon: 'credit_card' },
+    { id: 'Otro', label: 'Otro', icon: 'more_horiz' },
   ];
 
   return (
@@ -125,7 +142,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                 </div>
               </div>
 
-              {/* Selector de medio de pago */}
+              {/* Selector de medio de pago: Efectivo, Transferencia, QR / Mercado Pago, Tarjeta, Otro */}
               <div className="flex flex-col gap-1.5">
                 <label className="font-bold uppercase tracking-wider text-[10px] text-slate-500">
                   Seleccionar medio de pago
@@ -152,6 +169,31 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                     </motion.button>
                   ))}
                 </div>
+
+                {/* Si selecciona "Otro", campo de texto para escribir manualmente */}
+                <AnimatePresence>
+                  {paymentMethod === 'Otro' && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      exit={{ opacity: 0, height: 0 }}
+                      className="flex flex-col gap-1 mt-1 overflow-hidden"
+                    >
+                      <label className="font-bold uppercase tracking-wider text-[10px] text-slate-500">
+                        Otro medio de pago (especificar) *
+                      </label>
+                      <input
+                        type="text"
+                        autoFocus
+                        required
+                        value={customMethodText}
+                        onChange={(e) => setCustomMethodText(e.target.value)}
+                        placeholder="Ej: Canje, Cuenta corriente, Cheque..."
+                        className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs font-semibold text-slate-900 focus:outline-none focus:bg-white focus:border-[#0D5FAE]"
+                      />
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
 
               {/* Ajuste de importe si aplica */}

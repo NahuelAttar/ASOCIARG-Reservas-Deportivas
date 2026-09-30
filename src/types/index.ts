@@ -33,7 +33,12 @@ export type ReservationStatus =
 export type PaymentStatus = 'pendiente' | 'pagada';
 
 // Medios de pago del club
-export type PaymentMethod = 'Efectivo' | 'Transferencia' | 'QR / Mercado Pago' | 'Otro';
+export type PaymentMethod =
+  | 'Efectivo'
+  | 'Transferencia'
+  | 'QR / Mercado Pago'
+  | 'Tarjeta'
+  | 'Otro';
 
 export type BlockReason = 'Mantenimiento' | 'Torneo' | 'Uso interno' | 'Otro';
 
@@ -51,6 +56,7 @@ export interface Reservation {
   status: ReservationStatus;
   paymentStatus: PaymentStatus;
   paymentMethod?: PaymentMethod;
+  customPaymentMethod?: string; // Descripción cuando corresponda "Otro"
   paidAmount?: number;
   paidAt?: string; // Fecha y hora en que se registró el cobro
   isBlocked?: boolean;

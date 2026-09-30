@@ -645,32 +645,13 @@ export const BookingDrawer: React.FC<BookingDrawerProps> = ({
                         </div>
                         <div className="text-xs">
                           <div className="font-extrabold text-slate-900">
-                            Pagado · {reservation.paymentMethod || 'Efectivo'} · ${reservation.price.toLocaleString('es-AR')}
+                            Pagado · {reservation.paymentMethod === 'Otro' && reservation.customPaymentMethod ? `Otro: ${reservation.customPaymentMethod}` : reservation.paymentMethod || 'Efectivo'} · ${reservation.price.toLocaleString('es-AR')}
                           </div>
                           <div className="text-[11px] text-slate-400 font-medium">
                             Cobranza registrada correctamente
                           </div>
                         </div>
                       </div>
-                    )}
-
-                    {/* WhatsApp Quick Message Action */}
-                    {cleanPhone && (
-                      <motion.a
-                        whileHover={{ scale: 1.01 }}
-                        whileTap={{ scale: 0.98 }}
-                        href={`https://wa.me/${cleanPhone}?text=Hola%20${encodeURIComponent(
-                          reservation.person.name
-                        )},%20te%20escribimos%20por%20tu%20reserva%20de%20${encodeURIComponent(
-                          reservation.courtName
-                        )}%20el%20${reservation.date}%20a%20las%20${reservation.startTime}.`}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="p-3.5 rounded-2xl bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 text-emerald-800 font-bold text-xs flex items-center justify-center gap-2 transition-colors cursor-pointer shadow-2xs"
-                      >
-                        <span className="material-symbols-outlined text-[18px]">chat</span>
-                        <span>Enviar recordatorio por WhatsApp</span>
-                      </motion.a>
                     )}
 
                     {/* Operational Reception Actions */}

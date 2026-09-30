@@ -82,7 +82,8 @@ export default function App() {
   const handleConfirmPayment = (
     reservationId: string,
     paymentMethod: PaymentMethod,
-    amount: number
+    amount: number,
+    customPaymentMethod?: string
   ) => {
     const paidAt = new Date().toISOString();
 
@@ -93,6 +94,7 @@ export default function App() {
               ...r,
               paymentStatus: 'pagada',
               paymentMethod,
+              customPaymentMethod: paymentMethod === 'Otro' ? customPaymentMethod : undefined,
               paidAmount: amount,
               paidAt,
             }
@@ -107,13 +109,18 @@ export default function App() {
             ...prev,
             paymentStatus: 'pagada',
             paymentMethod,
+            customPaymentMethod: paymentMethod === 'Otro' ? customPaymentMethod : undefined,
             paidAmount: amount,
             paidAt,
           }
         : prev
     );
 
-    showToast(`Cobro registrado: ${paymentMethod} · $${amount.toLocaleString('es-AR')}`);
+    const methodLabel =
+      paymentMethod === 'Otro' && customPaymentMethod
+        ? `Otro (${customPaymentMethod})`
+        : paymentMethod;
+    showToast(`Cobro registrado: ${methodLabel} · $${amount.toLocaleString('es-AR')}`);
   };
 
   // Save or edit a reservation

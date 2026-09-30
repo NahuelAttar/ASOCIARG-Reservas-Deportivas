@@ -1,0 +1,6 @@
+{
+  "name": "ASOCIARG Reservas Deportivas",
+  "description": "Sistema integral de gestión de reservas de canchas, agenda operativa, auditoría de socios y control de caja para clubes deportivos.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

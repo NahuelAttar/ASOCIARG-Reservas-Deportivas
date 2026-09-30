@@ -90,8 +90,8 @@ export const BookingDrawer: React.FC<BookingDrawerProps> = ({
       setPrice(baseP);
       setPriceDisplay(baseP.toLocaleString('es-AR'));
       setNotes('');
-      setPersonMode('search');
-      setSelectedPersonId(people[0]?.id || '');
+      setPersonMode('new');
+      setSelectedPersonId('');
       setNewName('');
       setNewPhone('');
       setNewDni('');
@@ -141,22 +141,21 @@ export const BookingDrawer: React.FC<BookingDrawerProps> = ({
   const handleSubmitNew = (e: React.FormEvent) => {
     e.preventDefault();
 
-    let personObj: Person;
-    if (personMode === 'new') {
-      if (!newName.trim() || !newPhone.trim()) {
-        alert('Por favor ingresá Nombre y Teléfono del reservante.');
-        return;
-      }
-      personObj = {
-        id: `ext-${Date.now()}`,
-        name: newName.trim(),
-        phone: newPhone.trim(),
-        dni: newDni.trim() || undefined,
-        isMember: false,
-      };
-    } else {
-      personObj = selectedPerson || people[0];
+    if (!newName.trim()) {
+      alert('Por favor ingresá el Nombre de la persona que reserva el turno.');
+      return;
     }
+
+    const existingPerson = people.find((p) => p.id === selectedPersonId);
+
+    const personObj: Person = {
+      id: existingPerson ? existingPerson.id : `ext-${Date.now()}`,
+      name: newName.trim(),
+      phone: newPhone.trim() || 'Sin teléfono',
+      dni: newDni.trim() || existingPerson?.dni || undefined,
+      isMember: existingPerson ? existingPerson.isMember : false,
+      memberNumber: existingPerson ? existingPerson.memberNumber : undefined,
+    };
 
     onSaveReservation({
       courtId: currentCourt.id,
@@ -321,151 +320,85 @@ export const BookingDrawer: React.FC<BookingDrawerProps> = ({
                     </div>
                   </div>
 
-                  {/* 2. Reservante */}
-                  <div className="flex flex-col gap-2">
+                  {/* 2. Reservante (Cualquier persona puede reservar: se carga el nombre directamente) */}
+                  <div className="flex flex-col gap-2.5 p-3.5 bg-slate-50/70 rounded-2xl border border-slate-200">
                     <div className="flex items-center justify-between">
                       <span className="text-[11px] font-bold uppercase tracking-wider text-slate-700">
-                        Datos del Jugador / Cliente
+                        Datos del Jugador / Reservante
                       </span>
-
-                      <div className="inline-flex p-0.5 bg-slate-100 rounded-full text-[11px] font-medium border border-slate-200/60">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setPersonMode('search');
-                            setIsChangingPerson(false);
-                          }}
-                          className={`px-3 py-1 rounded-full transition-all cursor-pointer ${
-                            personMode === 'search'
-                              ? 'bg-white text-slate-900 shadow-2xs font-semibold'
-                              : 'text-slate-500 hover:text-slate-800'
-                          }`}
-                        >
-                          Buscar
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setPersonMode('new')}
-                          className={`px-3 py-1 rounded-full transition-all cursor-pointer ${
-                            personMode === 'new'
-                              ? 'bg-white text-slate-900 shadow-2xs font-semibold'
-                              : 'text-slate-500 hover:text-slate-800'
-                          }`}
-                        >
-                          Nuevo
-                        </button>
-                      </div>
+                      <span className="text-[10px] text-slate-400 font-medium">
+                        Cualquier persona puede reservar
+                      </span>
                     </div>
 
-                    {personMode === 'search' ? (
-                      selectedPerson && !isChangingPerson ? (
-                        <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-200/80 flex items-center justify-between">
-                          <div className="flex items-center gap-3">
-                            <div className="w-9 h-9 rounded-full bg-slate-200 flex items-center justify-center font-bold text-slate-700 text-xs">
-                              {selectedPerson.name.charAt(0)}
-                            </div>
-                            <div>
-                              <div className="flex items-center gap-2">
-                                <span className="font-bold text-slate-900 text-xs">
-                                  {selectedPerson.name}
-                                </span>
-                                {selectedPerson.isMember && (
-                                  <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-blue-50 text-[#0D5FAE]">
-                                    Socio #{selectedPerson.memberNumber}
-                                  </span>
-                                )}
-                              </div>
-                              <div className="text-[11px] text-slate-400 mt-0.5">
-                                {selectedPerson.phone}
-                              </div>
-                            </div>
-                          </div>
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[10px] font-bold uppercase text-slate-500">
+                        Nombre completo *
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={newName}
+                        onChange={(e) => {
+                          setNewName(e.target.value);
+                          if (selectedPersonId) setSelectedPersonId('');
+                        }}
+                        placeholder="Ej: Marcelo Rossi"
+                        className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-900 focus:outline-none focus:border-[#0D5FAE]"
+                      />
 
-                          <button
-                            type="button"
-                            onClick={() => setIsChangingPerson(true)}
-                            className="text-xs font-semibold text-[#0D5FAE] hover:underline cursor-pointer"
-                          >
-                            Cambiar
-                          </button>
-                        </div>
-                      ) : (
-                        <div className="flex flex-col gap-2">
-                          <div className="relative">
-                            <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-[16px]">
-                              search
-                            </span>
-                            <input
-                              type="text"
-                              autoFocus
-                              value={personSearchQuery}
-                              onChange={(e) => setPersonSearchQuery(e.target.value)}
-                              placeholder="Buscar por nombre o teléfono..."
-                              className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-[#0D5FAE] focus:bg-white"
-                            />
-                          </div>
-
-                          <div className="border border-slate-200 rounded-xl overflow-hidden divide-y divide-slate-100 max-h-36 overflow-y-auto">
-                            {filteredPeople.slice(0, 4).map((p) => (
-                              <div
-                                key={p.id}
-                                onClick={() => {
-                                  setSelectedPersonId(p.id);
-                                  setIsChangingPerson(false);
-                                }}
-                                className="p-2.5 hover:bg-slate-50 cursor-pointer flex items-center justify-between"
-                              >
-                                <div>
-                                  <div className="font-semibold text-slate-900 flex items-center gap-1.5">
-                                    <span>{p.name}</span>
-                                    {p.isMember && (
-                                      <span className="text-[10px] text-[#0D5FAE]">
-                                        (Socio #{p.memberNumber})
+                      {/* Sugerencias rápidas si el nombre coincide con algún contacto registrado */}
+                      {newName.trim().length >= 2 && !selectedPersonId && (
+                        (() => {
+                          const matches = people.filter((p) =>
+                            p.name.toLowerCase().includes(newName.toLowerCase().trim())
+                          );
+                          if (matches.length === 0) return null;
+                          return (
+                            <div className="mt-1 p-1 bg-white border border-slate-200 rounded-xl shadow-xs divide-y divide-slate-100 max-h-32 overflow-y-auto">
+                              <span className="block px-2 py-1 text-[9px] font-bold uppercase tracking-wider text-slate-400">
+                                Contactos registrados:
+                              </span>
+                              {matches.slice(0, 3).map((match) => (
+                                <button
+                                  key={match.id}
+                                  type="button"
+                                  onClick={() => {
+                                    setSelectedPersonId(match.id);
+                                    setNewName(match.name);
+                                    setNewPhone(match.phone);
+                                  }}
+                                  className="w-full text-left px-2 py-1.5 hover:bg-slate-50 rounded-lg flex items-center justify-between cursor-pointer"
+                                >
+                                  <span className="font-semibold text-xs text-slate-800">
+                                    {match.name}
+                                    {match.isMember && (
+                                      <span className="ml-1 text-[10px] text-[#0D5FAE]">
+                                        (Socio #{match.memberNumber})
                                       </span>
                                     )}
-                                  </div>
-                                  <span className="text-[11px] text-slate-400">{p.phone}</span>
-                                </div>
-                                {selectedPersonId === p.id && (
-                                  <span className="material-symbols-outlined text-[#0D5FAE] text-[16px]">
-                                    check
                                   </span>
-                                )}
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )
-                    ) : (
-                      <div className="flex flex-col gap-2.5 p-3.5 bg-slate-50/70 rounded-2xl border border-slate-200">
-                        <div className="flex flex-col gap-1">
-                          <label className="text-[10px] font-bold uppercase text-slate-500">
-                            Nombre completo *
-                          </label>
-                          <input
-                            type="text"
-                            required
-                            value={newName}
-                            onChange={(e) => setNewName(e.target.value)}
-                            placeholder="Ej: Marcelo Rossi"
-                            className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-medium text-slate-900 focus:outline-none focus:border-[#0D5FAE]"
-                          />
-                        </div>
-                        <div className="flex flex-col gap-1">
-                          <label className="text-[10px] font-bold uppercase text-slate-500">
-                            Teléfono de contacto (WhatsApp) *
-                          </label>
-                          <input
-                            type="tel"
-                            required
-                            value={newPhone}
-                            onChange={(e) => setNewPhone(e.target.value)}
-                            placeholder="Ej: 3564-445566"
-                            className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-medium text-slate-900 focus:outline-none focus:border-[#0D5FAE]"
-                          />
-                        </div>
-                      </div>
-                    )}
+                                  <span className="text-[10px] text-slate-400">{match.phone}</span>
+                                </button>
+                              ))}
+                            </div>
+                          );
+                        })()
+                      )}
+                    </div>
+
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[10px] font-bold uppercase text-slate-500">
+                        Teléfono de contacto (WhatsApp)
+                      </label>
+                      <input
+                        type="tel"
+                        value={newPhone}
+                        onChange={(e) => setNewPhone(e.target.value)}
+                        placeholder="Ej: 3564-445566"
+                        className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-medium text-slate-900 focus:outline-none focus:border-[#0D5FAE]"
+                      />
+                    </div>
                   </div>
 
                   {/* 3. Importe del turno con formato de puntos y SIN el 0 molesto */}

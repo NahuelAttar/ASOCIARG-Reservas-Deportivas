@@ -1,6 +1,13 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Court, Reservation, SportType, computeReservationStatus } from '../types';
+import {
+  Court,
+  Reservation,
+  SportType,
+  computeReservationStatus,
+  calculateEndTime,
+  getSportDurationMinutes,
+} from '../types';
 
 interface AgendaViewProps {
   courts: Court[];
@@ -33,25 +40,32 @@ export const AgendaView: React.FC<AgendaViewProps> = ({
   // Display mode: 'cards' (Fudo style - default, super intuitive) vs 'timeline' (Matriz tradicional)
   const [viewMode, setViewMode] = useState<'cards' | 'timeline'>('cards');
 
-  // Defined hours
-  const primeHours = ['16:00', '17:00', '18:00', '19:00', '20:00', '21:00', '22:00'];
-  const fullHours = [
-    '08:00',
-    '09:00',
-    '10:00',
-    '11:00',
-    '14:00',
-    '15:00',
-    '16:00',
-    '17:00',
-    '18:00',
-    '19:00',
-    '20:00',
-    '21:00',
-    '22:00',
-  ];
-
-  const activeHours = timeShift === 'prime' ? primeHours : fullHours;
+  // Duración según deporte: Pádel y Tenis son de 1 hora y media (90m), Fútbol es de 1 hora (60m)
+  const getSportSlots = (sport: SportType, shift: 'prime' | 'all'): string[] => {
+    if (sport === 'padel' || sport === 'tenis') {
+      return shift === 'prime'
+        ? ['16:30', '18:00', '19:30', '21:00', '22:30']
+        : ['09:00', '10:30', '12:00', '15:00', '16:30', '18:00', '19:30', '21:00', '22:30'];
+    }
+    // Fútbol 7: turnos de 1 hora
+    return shift === 'prime'
+      ? ['18:00', '19:00', '20:00', '21:00', '22:00', '23:00']
+      : [
+          '09:00',
+          '10:00',
+          '11:00',
+          '14:00',
+          '15:00',
+          '16:00',
+          '17:00',
+          '18:00',
+          '19:00',
+          '20:00',
+          '21:00',
+          '22:00',
+          '23:00',
+        ];
+  };
 
   // Filter courts by category, search, and covered
   const filteredCourts = courts.filter((court) => {
@@ -79,16 +93,45 @@ export const AgendaView: React.FC<AgendaViewProps> = ({
   };
 
   // Helper to count available slots for a court today
-  const getCourtAvailability = (courtId: string) => {
+  const getCourtAvailability = (court: Court) => {
+    const slots = getSportSlots(court.sport, timeShift);
     let freeCount = 0;
-    activeHours.forEach((hour) => {
-      if (!findReservation(courtId, hour)) freeCount++;
+    slots.forEach((hour) => {
+      if (!findReservation(court.id, hour)) freeCount++;
     });
-    return { freeCount, totalCount: activeHours.length };
+    return { freeCount, totalCount: slots.length, slots };
   };
 
   // Total free slots across all active courts today
-  const totalFreeSlots = filteredCourts.reduce((acc, c) => acc + getCourtAvailability(c.id).freeCount, 0);
+  const totalFreeSlots = filteredCourts.reduce(
+    (acc, c) => acc + getCourtAvailability(c).freeCount,
+    0
+  );
+
+  // Timeline matrix headers based on active category
+  const timelineHours =
+    selectedCategory === 'futbol'
+      ? getSportSlots('futbol', timeShift)
+      : selectedCategory === 'padel' || selectedCategory === 'tenis'
+      ? getSportSlots('padel', timeShift)
+      : timeShift === 'prime'
+      ? ['16:30', '18:00', '19:00', '19:30', '20:00', '21:00', '22:00', '22:30']
+      : [
+          '09:00',
+          '10:30',
+          '12:00',
+          '14:00',
+          '15:00',
+          '16:00',
+          '16:30',
+          '18:00',
+          '19:00',
+          '19:30',
+          '20:00',
+          '21:00',
+          '22:00',
+          '22:30',
+        ];
 
   return (
     <div className="flex flex-col gap-4.5 w-full max-w-7xl mx-auto pb-12">
@@ -101,9 +144,9 @@ export const AgendaView: React.FC<AgendaViewProps> = ({
           <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar w-full sm:w-auto relative">
             {(
               [
-                { id: 'padel', label: 'Pádel', icon: '🎾', count: 8 },
-                { id: 'futbol', label: 'Fútbol 7', icon: '⚽', count: 4 },
-                { id: 'tenis', label: 'Tenis', icon: '🎾', count: 3 },
+                { id: 'padel', label: 'Pádel (1h 30m)', icon: '🎾', count: 8 },
+                { id: 'futbol', label: 'Fútbol 7 (1h)', icon: '⚽', count: 4 },
+                { id: 'tenis', label: 'Tenis (1h 30m)', icon: '🎾', count: 3 },
                 { id: 'all', label: 'Todas', icon: '⭐', count: courts.length },
               ] as const
             ).map((cat) => {
@@ -113,7 +156,9 @@ export const AgendaView: React.FC<AgendaViewProps> = ({
                   key={cat.id}
                   onClick={() => setSelectedCategory(cat.id)}
                   className={`relative h-9 px-4 rounded-full text-xs sm:text-sm font-bold whitespace-nowrap transition-colors cursor-pointer flex items-center gap-2 ${
-                    isActive ? 'text-white' : 'text-slate-700 hover:text-slate-900 bg-white border border-slate-200/80 shadow-2xs'
+                    isActive
+                      ? 'text-white'
+                      : 'text-slate-700 hover:text-slate-900 bg-white border border-slate-200/80 shadow-2xs'
                   }`}
                 >
                   {isActive && (
@@ -123,7 +168,9 @@ export const AgendaView: React.FC<AgendaViewProps> = ({
                       transition={{ type: 'spring', stiffness: 400, damping: 32 }}
                     />
                   )}
-                  <span>{cat.icon} {cat.label}</span>
+                  <span>
+                    {cat.icon} {cat.label}
+                  </span>
                   <span
                     className={`text-[11px] px-1.5 py-0.2 rounded-full font-mono transition-colors ${
                       isActive ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-600'
@@ -159,7 +206,9 @@ export const AgendaView: React.FC<AgendaViewProps> = ({
             <button
               onClick={() => setViewMode('timeline')}
               className={`relative z-10 h-7.5 px-3 rounded-full transition-colors cursor-pointer flex items-center gap-1.5 ${
-                viewMode === 'timeline' ? 'text-slate-900 font-bold' : 'text-slate-600 hover:text-slate-900'
+                viewMode === 'timeline'
+                  ? 'text-slate-900 font-bold'
+                  : 'text-slate-600 hover:text-slate-900'
               }`}
               title="Vista de grilla horaria por cancha"
             >
@@ -217,7 +266,7 @@ export const AgendaView: React.FC<AgendaViewProps> = ({
               }`}
             >
               <span className="material-symbols-outlined text-[14px]">schedule</span>
-              <span>{timeShift === 'prime' ? 'Tarde / Noche (16h+)' : 'Día completo'}</span>
+              <span>{timeShift === 'prime' ? 'Tarde / Noche' : 'Día completo'}</span>
             </motion.button>
 
             <motion.button
@@ -250,17 +299,16 @@ export const AgendaView: React.FC<AgendaViewProps> = ({
       </div>
 
       {/* ========================================================================= */}
-      {/* 2. VISTA FUDO: TARJETAS CON ANIMACIONES FLUIDAS Y TURNOS TÁCTILES         */}
+      {/* 2. VISTA FUDO: TARJETAS CON TURNOS DE 1.5H (PÁDEL/TENIS) Y 1H (FÚTBOL)     */}
       {/* ========================================================================= */}
       {viewMode === 'cards' ? (
-        <motion.div
-          layout
-          className="grid grid-cols-1 lg:grid-cols-2 gap-4.5"
-        >
+        <motion.div layout className="grid grid-cols-1 lg:grid-cols-2 gap-4.5">
           <AnimatePresence mode="popLayout">
             {filteredCourts.map((court, index) => {
-              const { freeCount, totalCount } = getCourtAvailability(court.id);
+              const { freeCount, totalCount, slots: courtSlots } = getCourtAvailability(court);
               if (onlyAvailable && freeCount === 0) return null;
+
+              const isHourAndHalf = court.sport === 'padel' || court.sport === 'tenis';
 
               return (
                 <motion.div
@@ -279,9 +327,12 @@ export const AgendaView: React.FC<AgendaViewProps> = ({
                   {/* Court Top Info (Fudo Product Card style) */}
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex flex-col gap-1 min-w-0">
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
                         <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#0D5FAE] bg-blue-50/80 px-2 py-0.5 rounded-full">
                           {court.sportLabel}
+                        </span>
+                        <span className="text-[10px] font-bold text-slate-600 bg-slate-100 px-2 py-0.5 rounded-full">
+                          {isHourAndHalf ? 'Turnos de 1h 30m' : 'Turnos de 1 hora'}
                         </span>
                         {court.isCovered ? (
                           <span className="text-[10px] font-semibold text-slate-600 bg-slate-100 px-2 py-0.5 rounded-full flex items-center gap-1">
@@ -293,14 +344,9 @@ export const AgendaView: React.FC<AgendaViewProps> = ({
                             Exterior
                           </span>
                         )}
-                        {court.surface && (
-                          <span className="text-[10px] font-medium text-slate-400 hidden sm:inline">
-                            · {court.surface}
-                          </span>
-                        )}
                       </div>
 
-                      <h3 className="font-extrabold text-base sm:text-lg text-slate-900 tracking-tight leading-snug group-hover:text-[#0D5FAE] transition-colors">
+                      <h3 className="font-extrabold text-base sm:text-lg text-slate-900 tracking-tight leading-snug group-hover:text-[#0D5FAE] transition-colors mt-0.5">
                         {court.name}
                       </h3>
 
@@ -316,7 +362,9 @@ export const AgendaView: React.FC<AgendaViewProps> = ({
                       <div className="text-base sm:text-lg font-black text-slate-900 tabular-nums">
                         ${court.basePrice.toLocaleString('es-AR')}
                       </div>
-                      <span className="text-[10px] text-slate-400 font-medium">por hora</span>
+                      <span className="text-[10px] text-slate-400 font-medium">
+                        {isHourAndHalf ? 'por 1h 30m' : 'por 1 hora'}
+                      </span>
                     </div>
                   </div>
 
@@ -325,16 +373,17 @@ export const AgendaView: React.FC<AgendaViewProps> = ({
                     <div className="flex items-center justify-between text-xs">
                       <span className="font-bold text-slate-700 flex items-center gap-1.5">
                         <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                        <span>Turnos para hoy:</span>
+                        <span>Turnos para hoy ({isHourAndHalf ? '1h 30m' : '1h'}):</span>
                       </span>
                       <span className="text-[11px] text-slate-500 font-medium bg-slate-50 px-2 py-0.5 rounded-full border border-slate-100">
                         <strong className="text-emerald-700 font-bold">{freeCount} libres</strong> de {totalCount}
                       </span>
                     </div>
 
-                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
-                      {activeHours.map((hour) => {
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
+                      {courtSlots.map((hour) => {
                         const res = findReservation(court.id, hour);
+                        const slotEnd = calculateEndTime(hour, court.sport);
 
                         if (res) {
                           const isBlocked = res.isBlocked;
@@ -347,19 +396,21 @@ export const AgendaView: React.FC<AgendaViewProps> = ({
                               whileTap={{ scale: 0.96 }}
                               key={hour}
                               onClick={() => onSelectReservation(res)}
-                              className={`p-2 rounded-2xl border text-left flex flex-col justify-between transition-all cursor-pointer h-14 ${
+                              className={`p-2 rounded-2xl border text-left flex flex-col justify-between transition-all cursor-pointer h-15 ${
                                 isBlocked
                                   ? 'bg-slate-100 border-slate-200 text-slate-500'
                                   : !isPaid
                                   ? 'bg-amber-50/70 border-amber-200/90 hover:border-amber-400 hover:shadow-xs'
                                   : 'bg-blue-50/70 border-blue-200/90 hover:border-blue-400 hover:shadow-xs'
                               }`}
-                              title="Ver detalles de la reserva"
+                              title={`${hour} a ${res.endTime} hs · ${res.person.name}`}
                             >
                               <div className="flex items-center justify-between text-[11px] font-semibold text-slate-600">
                                 <span className="tabular-nums font-bold">{hour} hs</span>
                                 {isBlocked ? (
-                                  <span className="material-symbols-outlined text-[13px] text-slate-400">lock</span>
+                                  <span className="material-symbols-outlined text-[13px] text-slate-400">
+                                    lock
+                                  </span>
                                 ) : (
                                   <div className="flex items-center gap-1">
                                     <span
@@ -392,8 +443,8 @@ export const AgendaView: React.FC<AgendaViewProps> = ({
                             whileTap={{ scale: 0.95 }}
                             key={hour}
                             onClick={() => onSelectSlot(court.id, hour)}
-                            className="p-2 rounded-2xl border border-emerald-300 bg-emerald-50/60 hover:bg-emerald-500 hover:text-white hover:border-emerald-500 text-emerald-800 text-left flex flex-col justify-between transition-all cursor-pointer h-14 group/slot shadow-2xs hover:shadow-xs"
-                            title="Hacé clic para reservar este horario"
+                            className="p-2 rounded-2xl border border-emerald-300 bg-emerald-50/60 hover:bg-emerald-500 hover:text-white hover:border-emerald-500 text-emerald-800 text-left flex flex-col justify-between transition-all cursor-pointer h-15 group/slot shadow-2xs hover:shadow-xs"
+                            title={`Reservar de ${hour} a ${slotEnd} hs (${isHourAndHalf ? '1h 30m' : '1h'})`}
                           >
                             <div className="flex items-center justify-between text-[11px] font-bold">
                               <span className="tabular-nums">{hour} hs</span>
@@ -401,8 +452,8 @@ export const AgendaView: React.FC<AgendaViewProps> = ({
                                 +
                               </span>
                             </div>
-                            <div className="text-[11px] font-semibold text-emerald-700 group-hover/slot:text-white transition-colors">
-                              Disponible
+                            <div className="text-[10px] font-semibold text-emerald-700 group-hover/slot:text-white transition-colors truncate">
+                              a {slotEnd} hs
                             </div>
                           </motion.button>
                         );
@@ -414,13 +465,13 @@ export const AgendaView: React.FC<AgendaViewProps> = ({
                   <div className="flex items-center justify-between pt-2 text-xs">
                     <span className="text-[11px] text-slate-400 flex items-center gap-1 font-medium">
                       <span className="material-symbols-outlined text-[14px]">touch_app</span>
-                      <span>Tocá cualquier turno disponible</span>
+                      <span>Tocá cualquier horario libre ({isHourAndHalf ? '1h 30m' : '1h'})</span>
                     </span>
 
                     <motion.button
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.96 }}
-                      onClick={() => onSelectSlot(court.id, '19:00')}
+                      onClick={() => onSelectSlot(court.id, courtSlots[0] || '18:00')}
                       className="px-3.5 py-1.5 rounded-full bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs transition-all cursor-pointer shadow-2xs flex items-center gap-1"
                     >
                       <span>+ Reservar turno</span>
@@ -433,7 +484,7 @@ export const AgendaView: React.FC<AgendaViewProps> = ({
         </motion.div>
       ) : (
         /* ========================================================================= */
-        /* 3. VISTA GRILLA HORARIA (TIMELINE MATRIX) CON TRANSICIÓN SUAVE             */
+        /* 3. VISTA GRILLA HORARIA (TIMELINE MATRIX) CON DURACIONES AJUSTADAS         */
         /* ========================================================================= */
         <motion.div
           initial={{ opacity: 0, y: 10 }}
@@ -449,111 +500,116 @@ export const AgendaView: React.FC<AgendaViewProps> = ({
                   <th className="sticky left-0 bg-slate-50/95 z-30 w-[220px] min-w-[220px] py-2.5 px-4 border-r border-slate-200 font-bold uppercase tracking-wider text-[11px] text-slate-500 shadow-[1px_0_2px_rgba(0,0,0,0.03)]">
                     Cancha
                   </th>
-                  {activeHours.map((hour) => {
-                    const endH = `${(parseInt(hour.split(':')[0], 10) + 1).toString().padStart(2, '0')}:00`;
-                    return (
-                      <th
-                        key={hour}
-                        className="py-2.5 px-2 text-center border-r last:border-r-0 border-slate-200 font-bold text-xs text-slate-700 tabular-nums min-w-[130px]"
-                      >
-                        <span>{hour}</span>
-                        <span className="text-[10px] text-slate-400 font-normal ml-0.5">–{endH.slice(0, 2)}</span>
-                      </th>
-                    );
-                  })}
+                  {timelineHours.map((hour) => (
+                    <th
+                      key={hour}
+                      className="py-2.5 px-2 text-center border-r last:border-r-0 border-slate-200 font-bold text-xs text-slate-700 tabular-nums min-w-[130px]"
+                    >
+                      <span>{hour} hs</span>
+                    </th>
+                  ))}
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {filteredCourts.map((court) => (
-                  <tr key={court.id} className="h-[52px] hover:bg-slate-50/40 transition-colors">
-                    <td className="sticky left-0 bg-white z-20 w-[220px] min-w-[220px] py-2 px-4 border-r border-slate-200 shadow-[1px_0_2px_rgba(0,0,0,0.03)] align-middle">
-                      <div className="flex flex-col justify-center leading-tight">
-                        <div className="font-bold text-xs text-slate-900 tracking-tight flex items-center gap-1.5">
-                          <span className="truncate">{court.name}</span>
-                          {court.isCovered && (
+                {filteredCourts.map((court) => {
+                  const isHourAndHalf = court.sport === 'padel' || court.sport === 'tenis';
+
+                  return (
+                    <tr key={court.id} className="h-[52px] hover:bg-slate-50/40 transition-colors">
+                      <td className="sticky left-0 bg-white z-20 w-[220px] min-w-[220px] py-2 px-4 border-r border-slate-200 shadow-[1px_0_2px_rgba(0,0,0,0.03)] align-middle">
+                        <div className="flex flex-col justify-center leading-tight">
+                          <div className="font-bold text-xs text-slate-900 tracking-tight flex items-center gap-1.5">
+                            <span className="truncate">{court.name}</span>
                             <span className="text-[9px] font-semibold text-slate-500 bg-slate-100 px-1 py-0.2 rounded-full shrink-0">
-                              Techada
+                              {isHourAndHalf ? '1h 30m' : '1h'}
                             </span>
-                          )}
+                          </div>
+                          <div className="text-[11px] text-slate-400 font-medium tabular-nums mt-0.5">
+                            ${court.basePrice.toLocaleString('es-AR')}
+                          </div>
                         </div>
-                        <div className="text-[11px] text-slate-400 font-medium tabular-nums mt-0.5">
-                          ${court.basePrice.toLocaleString('es-AR')} / h
-                        </div>
-                      </div>
-                    </td>
+                      </td>
 
-                    {activeHours.map((hour) => {
-                      const res = findReservation(court.id, hour);
-                      const endHour = `${(parseInt(hour.split(':')[0], 10) + 1).toString().padStart(2, '0')}:00`;
+                      {timelineHours.map((hour) => {
+                        const res = reservations.find(
+                          (r) =>
+                            r.courtId === court.id &&
+                            r.date === currentDate &&
+                            r.status !== 'cancelada' &&
+                            (r.startTime === hour || (hour >= r.startTime && hour < r.endTime))
+                        );
 
-                      if (res) {
-                        const isBlocked = res.isBlocked;
-                        const isPaid = res.paymentStatus === 'pagada';
-                        const timing = computeReservationStatus(res);
+                        if (res) {
+                          const isBlocked = res.isBlocked;
+                          const isPaid = res.paymentStatus === 'pagada';
+                          const timing = computeReservationStatus(res);
+
+                          return (
+                            <td
+                              key={hour}
+                              onClick={() => onSelectReservation(res)}
+                              className="p-1.5 border-r last:border-r-0 border-slate-100 cursor-pointer align-middle min-w-[130px]"
+                            >
+                              <motion.div
+                                whileHover={{ scale: 1.02 }}
+                                whileTap={{ scale: 0.98 }}
+                                className={`w-full h-[40px] rounded-xl px-2.5 py-1 flex flex-col justify-between transition-all border text-left leading-none ${
+                                  isBlocked
+                                    ? 'bg-slate-100/90 border-slate-200 text-slate-700'
+                                    : !isPaid
+                                    ? 'bg-amber-50/90 border-amber-200 text-slate-900'
+                                    : 'bg-blue-50/80 border-blue-200 text-slate-900'
+                                }`}
+                              >
+                                <div className="flex items-center justify-between gap-1">
+                                  <span className="font-bold text-xs text-slate-900 truncate">
+                                    {isBlocked ? res.notes || res.blockReason : res.person.name}
+                                  </span>
+                                  <span
+                                    className={`w-1.5 h-1.5 rounded-full ${
+                                      timing === 'en_juego'
+                                        ? 'bg-blue-500 animate-pulse'
+                                        : isPaid
+                                        ? 'bg-emerald-500'
+                                        : 'bg-amber-500'
+                                    }`}
+                                  />
+                                </div>
+                                <div className="flex items-center justify-between text-[10px] text-slate-500 font-medium">
+                                  <span>
+                                    {res.startTime}–{res.endTime}
+                                  </span>
+                                  <span>{isPaid ? 'Pagada' : 'Pendiente'}</span>
+                                </div>
+                              </motion.div>
+                            </td>
+                          );
+                        }
 
                         return (
                           <td
                             key={hour}
-                            onClick={() => onSelectReservation(res)}
-                            className="p-1.5 border-r last:border-r-0 border-slate-100 cursor-pointer align-middle min-w-[130px]"
+                            onClick={() => onSelectSlot(court.id, hour)}
+                            className="p-1.5 border-r last:border-r-0 border-slate-100 cursor-pointer align-middle group min-w-[130px]"
                           >
                             <motion.div
                               whileHover={{ scale: 1.02 }}
                               whileTap={{ scale: 0.98 }}
-                              className={`w-full h-[40px] rounded-xl px-2.5 py-1 flex flex-col justify-between transition-all border text-left leading-none ${
-                                isBlocked
-                                  ? 'bg-slate-100/90 border-slate-200 text-slate-700'
-                                  : !isPaid
-                                  ? 'bg-amber-50/90 border-amber-200 text-slate-900'
-                                  : 'bg-blue-50/80 border-blue-200 text-slate-900'
-                              }`}
+                              className="w-full h-[40px] rounded-xl border border-dashed border-slate-200 hover:border-[#0D5FAE] bg-white hover:bg-blue-50/40 px-2.5 flex items-center justify-between transition-all"
                             >
-                              <div className="flex items-center justify-between gap-1">
-                                <span className="font-bold text-xs text-slate-900 truncate">
-                                  {isBlocked ? (res.notes || res.blockReason) : res.person.name}
-                                </span>
-                                <span
-                                  className={`w-1.5 h-1.5 rounded-full ${
-                                    timing === 'en_juego'
-                                      ? 'bg-blue-500 animate-pulse'
-                                      : isPaid
-                                      ? 'bg-emerald-500'
-                                      : 'bg-amber-500'
-                                  }`}
-                                />
-                              </div>
-                              <div className="flex items-center justify-between text-[10px] text-slate-500 font-medium">
-                                <span>{hour.slice(0, 2)}–{endHour.slice(0, 2)} hs</span>
-                                <span>{isPaid ? 'Pagada' : 'Pendiente'}</span>
-                              </div>
+                              <span className="text-[11px] text-slate-400 group-hover:text-[#0D5FAE] font-medium">
+                                Libre
+                              </span>
+                              <span className="text-[10px] text-slate-400 tabular-nums">
+                                ${court.basePrice.toLocaleString('es-AR')}
+                              </span>
                             </motion.div>
                           </td>
                         );
-                      }
-
-                      return (
-                        <td
-                          key={hour}
-                          onClick={() => onSelectSlot(court.id, hour)}
-                          className="p-1.5 border-r last:border-r-0 border-slate-100 cursor-pointer align-middle group min-w-[130px]"
-                        >
-                          <motion.div
-                            whileHover={{ scale: 1.02 }}
-                            whileTap={{ scale: 0.98 }}
-                            className="w-full h-[40px] rounded-xl border border-dashed border-slate-200 hover:border-[#0D5FAE] bg-white hover:bg-blue-50/40 px-2.5 flex items-center justify-between transition-all"
-                          >
-                            <span className="text-[11px] text-slate-400 group-hover:text-[#0D5FAE] font-medium">
-                              Libre
-                            </span>
-                            <span className="text-[10px] text-slate-400 tabular-nums">
-                              ${court.basePrice.toLocaleString('es-AR')}
-                            </span>
-                          </motion.div>
-                        </td>
-                      );
-                    })}
-                  </tr>
-                ))}
+                      })}
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>

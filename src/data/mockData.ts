@@ -1,7 +1,7 @@
 import { Court, Person, Reservation } from '../types';
 
 export const INITIAL_COURTS: Court[] = [
-  // PÁDEL (8 Canchas)
+  // PÁDEL (8 Canchas) - Turnos de 1h 30m
   {
     id: 'padel-1',
     name: 'Cancha 1 · Cristal',
@@ -78,7 +78,7 @@ export const INITIAL_COURTS: Court[] = [
     description: 'Cancha clásica al aire libre, iluminación LED perimetral.',
   },
 
-  // FÚTBOL 7 (4 Canchas)
+  // FÚTBOL 7 (4 Canchas) - Turnos de 1h
   {
     id: 'f7-1',
     name: 'Cancha 1 · Sintético Pro',
@@ -117,7 +117,7 @@ export const INITIAL_COURTS: Court[] = [
     description: 'Tinglado completo cerrado, libre de viento y lluvia, sonido ambiental.',
   },
 
-  // TENIS (3 Canchas)
+  // TENIS (3 Canchas) - Turnos de 1h 30m
   {
     id: 'tenis-1',
     name: 'Cancha 1 · Polvo de ladrillo',
@@ -218,7 +218,7 @@ export const INITIAL_PEOPLE: Person[] = [
 ];
 
 export const INITIAL_RESERVATIONS: Reservation[] = [
-  // Cancha 1 Pádel - 18:00 a 19:00 (Finalizada y ya Cobrada)
+  // Cancha 1 Pádel - 18:00 a 19:30 (1h 30m - Finalizada y ya Cobrada)
   {
     id: 'res-1',
     courtId: 'padel-1',
@@ -226,7 +226,7 @@ export const INITIAL_RESERVATIONS: Reservation[] = [
     sport: 'padel',
     date: '2024-10-30',
     startTime: '18:00',
-    endTime: '19:00',
+    endTime: '19:30',
     person: INITIAL_PEOPLE[4], // Martín González
     price: 12000,
     suggestedPrice: 12000,
@@ -234,18 +234,18 @@ export const INITIAL_RESERVATIONS: Reservation[] = [
     paymentStatus: 'pagada',
     paymentMethod: 'QR / Mercado Pago',
     paidAmount: 12000,
-    paidAt: '2024-10-30T19:05:00',
+    paidAt: '2024-10-30T19:35:00',
     notes: 'Alquila 2 paletas en recepción.',
     createdAt: '2024-10-30T10:00:00',
   },
-  // Cancha 1 Pádel - 20:00 a 21:00 (En juego - Pendiente de cobro)
+  // Cancha 1 Pádel - 19:30 a 21:00 (1h 30m - En juego - Pendiente de cobro)
   {
     id: 'res-7',
     courtId: 'padel-1',
     courtName: 'Cancha 1 · Cristal',
     sport: 'padel',
     date: '2024-10-30',
-    startTime: '20:00',
+    startTime: '19:30',
     endTime: '21:00',
     person: INITIAL_PEOPLE[0], // Juan Pérez
     price: 12000,
@@ -255,15 +255,15 @@ export const INITIAL_RESERVATIONS: Reservation[] = [
     createdAt: '2024-10-30T09:15:00',
   },
 
-  // Cancha 2 Pádel - 19:00 a 20:00 (Finalizada - Pendiente de cobro)
+  // Cancha 2 Pádel - 18:00 a 19:30 (1h 30m - Finalizada - Pendiente de cobro)
   {
     id: 'res-3',
     courtId: 'padel-2',
     courtName: 'Cancha 2 · Techada',
     sport: 'padel',
     date: '2024-10-30',
-    startTime: '19:00',
-    endTime: '20:00',
+    startTime: '18:00',
+    endTime: '19:30',
     person: INITIAL_PEOPLE[1], // Lucas Albarracín
     price: 12000,
     suggestedPrice: 12000,
@@ -273,15 +273,15 @@ export const INITIAL_RESERVATIONS: Reservation[] = [
     createdAt: '2024-10-30T11:00:00',
   },
 
-  // Cancha 3 Pádel - 18:00 a 19:00 (Finalizada y Cobrada)
+  // Cancha 3 Pádel - 16:30 a 18:00 (1h 30m - Finalizada y Cobrada)
   {
     id: 'res-301',
     courtId: 'padel-3',
     courtName: 'Cancha 3 · Cristal',
     sport: 'padel',
     date: '2024-10-30',
-    startTime: '18:00',
-    endTime: '19:00',
+    startTime: '16:30',
+    endTime: '18:00',
     person: INITIAL_PEOPLE[7], // Federico Santoro
     price: 12000,
     suggestedPrice: 12000,
@@ -289,10 +289,10 @@ export const INITIAL_RESERVATIONS: Reservation[] = [
     paymentStatus: 'pagada',
     paymentMethod: 'Efectivo',
     paidAmount: 12000,
-    paidAt: '2024-10-30T19:02:00',
+    paidAt: '2024-10-30T18:02:00',
     createdAt: '2024-10-29T14:00:00',
   },
-  // Cancha 3 Pádel - 21:00 a 22:00 (Reservada por jugar - Pendiente)
+  // Cancha 3 Pádel - 21:00 a 22:30 (1h 30m - Reservada por jugar - Pendiente)
   {
     id: 'res-302',
     courtId: 'padel-3',
@@ -300,7 +300,7 @@ export const INITIAL_RESERVATIONS: Reservation[] = [
     sport: 'padel',
     date: '2024-10-30',
     startTime: '21:00',
-    endTime: '22:00',
+    endTime: '22:30',
     person: INITIAL_PEOPLE[6], // Carlos Méndez
     price: 12000,
     suggestedPrice: 12000,
@@ -309,14 +309,14 @@ export const INITIAL_RESERVATIONS: Reservation[] = [
     createdAt: '2024-10-30T12:00:00',
   },
 
-  // Cancha 4 Pádel - 20:00 a 21:00 (En juego - Pendiente)
+  // Cancha 4 Pádel - 19:30 a 21:00 (1h 30m - En juego - Pendiente)
   {
     id: 'res-401',
     courtId: 'padel-4',
     courtName: 'Cancha 4 · Techada',
     sport: 'padel',
     date: '2024-10-30',
-    startTime: '20:00',
+    startTime: '19:30',
     endTime: '21:00',
     person: INITIAL_PEOPLE[3], // Carla Benítez
     price: 12000,
@@ -326,15 +326,15 @@ export const INITIAL_RESERVATIONS: Reservation[] = [
     createdAt: '2024-10-29T18:00:00',
   },
 
-  // Cancha 5 Pádel - 19:00 a 20:00 (Finalizada y Cobrada)
+  // Cancha 5 Pádel - 18:00 a 19:30 (1h 30m - Finalizada y Cobrada)
   {
     id: 'res-501',
     courtId: 'padel-5',
     courtName: 'Cancha 5 · Exterior',
     sport: 'padel',
     date: '2024-10-30',
-    startTime: '19:00',
-    endTime: '20:00',
+    startTime: '18:00',
+    endTime: '19:30',
     person: INITIAL_PEOPLE[5], // Matías Rossi
     price: 10000,
     suggestedPrice: 10000,
@@ -342,7 +342,7 @@ export const INITIAL_RESERVATIONS: Reservation[] = [
     paymentStatus: 'pagada',
     paymentMethod: 'Transferencia',
     paidAmount: 10000,
-    paidAt: '2024-10-30T20:10:00',
+    paidAt: '2024-10-30T19:38:00',
     createdAt: '2024-10-30T10:30:00',
   },
 
@@ -353,8 +353,8 @@ export const INITIAL_RESERVATIONS: Reservation[] = [
     courtName: 'Cancha 6 · Cristal',
     sport: 'padel',
     date: '2024-10-30',
-    startTime: '16:00',
-    endTime: '18:00',
+    startTime: '16:30',
+    endTime: '19:30',
     person: {
       id: 'staff-maint-padel',
       name: 'Mantenimiento Luces LED',
@@ -371,14 +371,14 @@ export const INITIAL_RESERVATIONS: Reservation[] = [
     createdAt: '2024-10-30T08:00:00',
   },
 
-  // Cancha 7 Pádel - 20:00 a 21:00 (En juego - Pendiente)
+  // Cancha 7 Pádel - 19:30 a 21:00 (1h 30m - En juego - Pendiente)
   {
     id: 'res-701',
     courtId: 'padel-7',
     courtName: 'Cancha 7 · Techada',
     sport: 'padel',
     date: '2024-10-30',
-    startTime: '20:00',
+    startTime: '19:30',
     endTime: '21:00',
     person: INITIAL_PEOPLE[2], // Gonzalo Morales
     price: 12000,
@@ -388,7 +388,7 @@ export const INITIAL_RESERVATIONS: Reservation[] = [
     createdAt: '2024-10-30T14:00:00',
   },
 
-  // Cancha 8 Pádel - 21:00 a 22:00 (Reservada)
+  // Cancha 8 Pádel - 21:00 a 22:30 (1h 30m - Reservada)
   {
     id: 'res-801',
     courtId: 'padel-8',
@@ -396,7 +396,7 @@ export const INITIAL_RESERVATIONS: Reservation[] = [
     sport: 'padel',
     date: '2024-10-30',
     startTime: '21:00',
-    endTime: '22:00',
+    endTime: '22:30',
     person: INITIAL_PEOPLE[0], // Juan Pérez
     price: 10000,
     suggestedPrice: 10000,
@@ -405,7 +405,7 @@ export const INITIAL_RESERVATIONS: Reservation[] = [
     createdAt: '2024-10-30T15:00:00',
   },
 
-  // Fútbol 7
+  // FÚTBOL 7 - Turnos de 1h
   {
     id: 'res-2',
     courtId: 'f7-1',
@@ -431,24 +431,23 @@ export const INITIAL_RESERVATIONS: Reservation[] = [
     sport: 'futbol',
     date: '2024-10-30',
     startTime: '21:00',
-    endTime: '22:30',
+    endTime: '22:00',
     person: INITIAL_PEOPLE[8], // Equipo Los Amigos
-    price: 37500,
-    suggestedPrice: 37500,
+    price: 25000,
+    suggestedPrice: 25000,
     status: 'reservada',
     paymentStatus: 'pendiente',
-    notes: 'Turno extendido 1.5hs.',
     createdAt: '2024-10-30T16:00:00',
   },
 
-  // Tenis
+  // TENIS - Turnos de 1h 30m
   {
     id: 'res-4',
     courtId: 'tenis-2',
     courtName: 'Cancha 2 · Polvo de ladrillo',
     sport: 'tenis',
     date: '2024-10-30',
-    startTime: '20:00',
+    startTime: '19:30',
     endTime: '21:00',
     person: INITIAL_PEOPLE[2], // Gonzalo Morales
     price: 14000,
@@ -464,7 +463,7 @@ export const INITIAL_RESERVATIONS: Reservation[] = [
     sport: 'tenis',
     date: '2024-10-30',
     startTime: '21:00',
-    endTime: '22:00',
+    endTime: '22:30',
     person: {
       id: 'staff-maint',
       name: 'Riego y Rolado',

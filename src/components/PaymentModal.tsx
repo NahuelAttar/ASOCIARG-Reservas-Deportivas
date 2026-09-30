@@ -23,15 +23,31 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('Efectivo');
   const [customMethodText, setCustomMethodText] = useState<string>('');
   const [amount, setAmount] = useState<number>(reservation?.price || 12000);
+  const [amountDisplay, setAmountDisplay] = useState<string>(
+    (reservation?.price || 12000).toLocaleString('es-AR')
+  );
 
   // Sync state when reservation opens
   React.useEffect(() => {
     if (reservation) {
       setAmount(reservation.price);
+      setAmountDisplay(reservation.price.toLocaleString('es-AR'));
       setPaymentMethod('Efectivo');
       setCustomMethodText('');
     }
   }, [reservation]);
+
+  const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const raw = e.target.value.replace(/\D/g, '');
+    if (!raw) {
+      setAmount(0);
+      setAmountDisplay('');
+      return;
+    }
+    const val = parseInt(raw, 10);
+    setAmount(val);
+    setAmountDisplay(val.toLocaleString('es-AR'));
+  };
 
   if (!reservation) return null;
 
@@ -205,7 +221,10 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                   {amount !== reservation.price && (
                     <button
                       type="button"
-                      onClick={() => setAmount(reservation.price)}
+                      onClick={() => {
+                        setAmount(reservation.price);
+                        setAmountDisplay(reservation.price.toLocaleString('es-AR'));
+                      }}
                       className="text-[10px] text-[#0D5FAE] hover:underline font-semibold cursor-pointer"
                     >
                       Restablecer (${reservation.price.toLocaleString('es-AR')})
@@ -213,9 +232,11 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                   )}
                 </div>
                 <input
-                  type="number"
-                  value={amount}
-                  onChange={(e) => setAmount(Number(e.target.value))}
+                  type="text"
+                  inputMode="numeric"
+                  value={amountDisplay}
+                  placeholder="0"
+                  onChange={handleAmountChange}
                   className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm font-extrabold text-slate-900 focus:outline-none focus:bg-white focus:border-[#0D5FAE] tabular-nums"
                 />
               </div>

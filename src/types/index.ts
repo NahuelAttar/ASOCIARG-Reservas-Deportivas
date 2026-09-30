@@ -48,8 +48,8 @@ export interface Reservation {
   courtName: string;
   sport: SportType;
   date: string; // YYYY-MM-DD
-  startTime: string; // "19:00"
-  endTime: string; // "20:00"
+  startTime: string; // "18:00"
+  endTime: string; // "19:30" (Pádel/Tenis 1h30m, Fútbol 1h)
   person: Person;
   price: number; // Importe histórico inmutable fijado al crear la reserva
   suggestedPrice?: number;
@@ -63,6 +63,28 @@ export interface Reservation {
   blockReason?: BlockReason;
   notes?: string;
   createdAt: string;
+}
+
+// Duración oficial en minutos: Pádel y Tenis 90 min (1h 30m), Fútbol 60 min (1h)
+export function getSportDurationMinutes(sport: SportType): number {
+  if (sport === 'padel' || sport === 'tenis') {
+    return 90;
+  }
+  return 60;
+}
+
+// Calcula el horario de fin exacto según el deporte (1h 30m para pádel y tenis, 1h para fútbol)
+export function calculateEndTime(startTime: string, sport: SportType): string {
+  const parts = startTime.split(':');
+  const h = parseInt(parts[0], 10) || 0;
+  const m = parseInt(parts[1], 10) || 0;
+  const duration = getSportDurationMinutes(sport);
+
+  const totalMinutes = h * 60 + m + duration;
+  const endH = Math.floor(totalMinutes / 60) % 24;
+  const endM = totalMinutes % 60;
+
+  return `${endH.toString().padStart(2, '0')}:${endM.toString().padStart(2, '0')}`;
 }
 
 // Determina el estado de juego de la reserva según horario actual

@@ -1,6 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Court, Person, Reservation, ReservationStatus, PaymentStatus, computeReservationStatus } from '../types';
+import {
+  Court,
+  Person,
+  Reservation,
+  computeReservationStatus,
+  calculateEndTime,
+  getSportDurationMinutes,
+} from '../types';
 
 interface BookingDrawerProps {
   isOpen: boolean;
@@ -48,8 +55,9 @@ export const BookingDrawer: React.FC<BookingDrawerProps> = ({
   const [newPhone, setNewPhone] = useState<string>('');
   const [newDni, setNewDni] = useState<string>('');
 
-  // Editable tariff (stored historically in the reservation)
+  // Editable tariff: numeric value + formatted display with dots/commas and NO sticky zero
   const [price, setPrice] = useState<number>(12000);
+  const [priceDisplay, setPriceDisplay] = useState<string>('12.000');
   const [notes, setNotes] = useState<string>('');
 
   // Sync state on drawer open
@@ -59,6 +67,7 @@ export const BookingDrawer: React.FC<BookingDrawerProps> = ({
       setDate(reservation.date);
       setStartTime(reservation.startTime);
       setPrice(reservation.price);
+      setPriceDisplay(reservation.price.toLocaleString('es-AR'));
       setNotes(reservation.notes || '');
       setSelectedPersonId(reservation.person.id);
       setNewName(reservation.person.name);
@@ -71,7 +80,9 @@ export const BookingDrawer: React.FC<BookingDrawerProps> = ({
       setCourtId(activeCourt ? activeCourt.id : courts[0]?.id || 'padel-1');
       setDate(prefillDate || '2024-10-30');
       setStartTime(prefillTime || '19:00');
-      setPrice(activeCourt ? activeCourt.basePrice : 12000);
+      const baseP = activeCourt ? activeCourt.basePrice : 12000;
+      setPrice(baseP);
+      setPriceDisplay(baseP.toLocaleString('es-AR'));
       setNotes('');
       setPersonMode('search');
       setSelectedPersonId(people[0]?.id || '');
@@ -85,6 +96,19 @@ export const BookingDrawer: React.FC<BookingDrawerProps> = ({
 
   const currentCourt = courts.find((c) => c.id === courtId) || courts[0];
   const suggestedPrice = currentCourt ? currentCourt.basePrice : 12000;
+
+  // Formatted price change without annoying leading zero and with thousand separators
+  const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const raw = e.target.value.replace(/\D/g, '');
+    if (!raw) {
+      setPrice(0);
+      setPriceDisplay('');
+      return;
+    }
+    const val = parseInt(raw, 10);
+    setPrice(val);
+    setPriceDisplay(val.toLocaleString('es-AR'));
+  };
 
   // Filtered people for autocomplete
   const filteredPeople = people.filter((p) => {
@@ -102,18 +126,10 @@ export const BookingDrawer: React.FC<BookingDrawerProps> = ({
     people.find((p) => p.id === selectedPersonId) ||
     (reservation ? reservation.person : people[0]);
 
-  // Clean phone for WhatsApp integration
-  const activePhone =
-    mode === 'detail' && reservation
-      ? reservation.person.phone
-      : personMode === 'new'
-      ? newPhone
-      : selectedPerson?.phone || '';
-  const cleanPhone = activePhone.replace(/[^0-9]/g, '');
-
-  const startH = parseInt(startTime.split(':')[0], 10) || 19;
-  const endH = startH + 1;
-  const formattedEndTime = `${endH.toString().padStart(2, '0')}:00`;
+  // Duración: Pádel y Tenis 1h 30m, Fútbol 1h
+  const formattedEndTime = calculateEndTime(startTime, currentCourt?.sport || 'padel');
+  const durationMinutes = getSportDurationMinutes(currentCourt?.sport || 'padel');
+  const durationText = durationMinutes === 90 ? '1 hora y media' : '1 hora';
 
   // Submit new reservation: Al confirmar, queda en estado Reservada y cobro Pendiente
   const handleSubmitNew = (e: React.FormEvent) => {
@@ -205,7 +221,7 @@ export const BookingDrawer: React.FC<BookingDrawerProps> = ({
                       Nueva Reserva
                     </h2>
                     <div className="text-xs font-semibold text-slate-500 mt-0.5">
-                      {startTime} a {formattedEndTime} hs · {date}
+                      {startTime} a {formattedEndTime} hs ({durationText}) · {date}
                     </div>
                   </div>
 
@@ -231,26 +247,57 @@ export const BookingDrawer: React.FC<BookingDrawerProps> = ({
 
                     <div className="grid grid-cols-2 gap-2">
                       <div>
-                        <label className="text-[10px] text-slate-400 font-semibold">Cancha</label>
+                        <label className="text-[10px] text-slate-400 font-semibold">Cancha (Deporte)</label>
                         <select
                           value={courtId}
                           onChange={(e) => {
-                            setCourtId(e.target.value);
-                            const c = courts.find((ct) => ct.id === e.target.value);
-                            if (c) setPrice(c.basePrice);
+                            const newCourtId = e.target.value;
+                            setCourtId(newCourtId);
+                            const c = courts.find((ct) => ct.id === newCourtId);
+                            if (c) {
+                              setPrice(c.basePrice);
+                              setPriceDisplay(c.basePrice.toLocaleString('es-AR'));
+                            }
                           }}
                           className="w-full mt-0.5 px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-900 focus:outline-none focus:border-[#0D5FAE]"
                         >
-                          {courts.map((c) => (
-                            <option key={c.id} value={c.id}>
-                              {c.name} (${c.basePrice.toLocaleString('es-AR')})
-                            </option>
-                          ))}
+                          <optgroup label="🎾 Pádel (Turnos de 1 hora y media)">
+                            {courts
+                              .filter((c) => c.sport === 'padel')
+                              .map((c) => (
+                                <option key={c.id} value={c.id}>
+                                  Pádel · {c.name} (${c.basePrice.toLocaleString('es-AR')})
+                                </option>
+                              ))}
+                          </optgroup>
+                          <optgroup label="⚽ Fútbol 7 (Turnos de 1 hora)">
+                            {courts
+                              .filter((c) => c.sport === 'futbol')
+                              .map((c) => (
+                                <option key={c.id} value={c.id}>
+                                  Fútbol 7 · {c.name} (${c.basePrice.toLocaleString('es-AR')})
+                                </option>
+                              ))}
+                          </optgroup>
+                          <optgroup label="🎾 Tenis (Turnos de 1 hora y media)">
+                            {courts
+                              .filter((c) => c.sport === 'tenis')
+                              .map((c) => (
+                                <option key={c.id} value={c.id}>
+                                  Tenis · {c.name} (${c.basePrice.toLocaleString('es-AR')})
+                                </option>
+                              ))}
+                          </optgroup>
                         </select>
                       </div>
 
                       <div>
-                        <label className="text-[10px] text-slate-400 font-semibold">Horario inicio</label>
+                        <div className="flex items-center justify-between">
+                          <label className="text-[10px] text-slate-400 font-semibold">Horario inicio</label>
+                          <span className="text-[10px] text-[#0D5FAE] font-bold">
+                            {currentCourt?.sport === 'futbol' ? '1h' : '1h 30m'}
+                          </span>
+                        </div>
                         <input
                           type="time"
                           value={startTime}
@@ -408,7 +455,7 @@ export const BookingDrawer: React.FC<BookingDrawerProps> = ({
                     )}
                   </div>
 
-                  {/* 3. Importe del turno (Guardado inmutablemente en la reserva) */}
+                  {/* 3. Importe del turno con formato de puntos y SIN el 0 molesto */}
                   <div className="flex flex-col gap-2.5 p-3.5 bg-slate-50 rounded-2xl border border-slate-200/80">
                     <div className="flex items-center justify-between">
                       <span className="text-[11px] font-bold uppercase tracking-wider text-slate-700">
@@ -416,7 +463,10 @@ export const BookingDrawer: React.FC<BookingDrawerProps> = ({
                       </span>
                       <button
                         type="button"
-                        onClick={() => setPrice(suggestedPrice)}
+                        onClick={() => {
+                          setPrice(suggestedPrice);
+                          setPriceDisplay(suggestedPrice.toLocaleString('es-AR'));
+                        }}
                         className="text-[11px] text-[#0D5FAE] hover:underline font-medium cursor-pointer"
                       >
                         Tarifa base: ${suggestedPrice.toLocaleString('es-AR')}
@@ -426,14 +476,16 @@ export const BookingDrawer: React.FC<BookingDrawerProps> = ({
                     <div className="flex items-center gap-2">
                       <span className="text-slate-400 font-bold text-lg">$</span>
                       <input
-                        type="number"
-                        value={price}
-                        onChange={(e) => setPrice(Number(e.target.value))}
+                        type="text"
+                        inputMode="numeric"
+                        value={priceDisplay}
+                        placeholder="0"
+                        onChange={handlePriceChange}
                         className="w-full bg-white px-3 py-2 rounded-xl border border-slate-300 font-extrabold text-base text-slate-900 focus:outline-none focus:border-[#0D5FAE] tabular-nums"
                       />
                     </div>
                     <span className="text-[10px] text-slate-400">
-                      Este importe quedará registrado en la reserva. Se cobrará una vez jugado el turno.
+                      Importe del turno ({durationText}). Se cobrará una vez finalizado el partido.
                     </span>
                   </div>
 
@@ -565,7 +617,11 @@ export const BookingDrawer: React.FC<BookingDrawerProps> = ({
                         </span>
                         <span className="text-[11px] text-slate-500">
                           {reservation.paymentStatus === 'pagada' && reservation.paymentMethod
-                            ? `Medio: ${reservation.paymentMethod}`
+                            ? `Medio: ${
+                                reservation.paymentMethod === 'Otro' && reservation.customPaymentMethod
+                                  ? `Otro (${reservation.customPaymentMethod})`
+                                  : reservation.paymentMethod
+                              }`
                             : 'Pendiente de cobro'}
                         </span>
                       </div>
@@ -645,7 +701,11 @@ export const BookingDrawer: React.FC<BookingDrawerProps> = ({
                         </div>
                         <div className="text-xs">
                           <div className="font-extrabold text-slate-900">
-                            Pagado · {reservation.paymentMethod === 'Otro' && reservation.customPaymentMethod ? `Otro: ${reservation.customPaymentMethod}` : reservation.paymentMethod || 'Efectivo'} · ${reservation.price.toLocaleString('es-AR')}
+                            Pagado ·{' '}
+                            {reservation.paymentMethod === 'Otro' && reservation.customPaymentMethod
+                              ? `Otro: ${reservation.customPaymentMethod}`
+                              : reservation.paymentMethod || 'Efectivo'}{' '}
+                            · ${reservation.price.toLocaleString('es-AR')}
                           </div>
                           <div className="text-[11px] text-slate-400 font-medium">
                             Cobranza registrada correctamente

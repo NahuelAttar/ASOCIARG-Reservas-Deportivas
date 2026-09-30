@@ -218,6 +218,25 @@ export const INITIAL_PEOPLE: Person[] = [
 ];
 
 export const INITIAL_RESERVATIONS: Reservation[] = [
+  // Cancha 1 Pádel - 09:00 a 10:30 (1h 30m - Finalizada y Pagada)
+  {
+    id: 'res-morning-1',
+    courtId: 'padel-1',
+    courtName: 'Cancha 1 · Cristal',
+    sport: 'padel',
+    date: '2024-10-30',
+    startTime: '09:00',
+    endTime: '10:30',
+    person: INITIAL_PEOPLE[3], // Carla Benítez
+    price: 12000,
+    suggestedPrice: 12000,
+    status: 'finalizada',
+    paymentStatus: 'pagada',
+    paymentMethod: 'Efectivo',
+    paidAmount: 12000,
+    paidAt: '2024-10-30T10:35:00',
+    createdAt: '2024-10-29T18:00:00',
+  },
   // Cancha 1 Pádel - 18:00 a 19:30 (1h 30m - Finalizada y ya Cobrada)
   {
     id: 'res-1',

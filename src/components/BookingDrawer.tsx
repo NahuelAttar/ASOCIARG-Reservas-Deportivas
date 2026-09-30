@@ -7,6 +7,7 @@ import {
   computeReservationStatus,
   calculateEndTime,
   getSportDurationMinutes,
+  getSportSlots,
 } from '../types';
 
 interface BookingDrawerProps {
@@ -77,9 +78,14 @@ export const BookingDrawer: React.FC<BookingDrawerProps> = ({
       setIsChangingPerson(false);
     } else if (mode === 'new') {
       const activeCourt = courts.find((c) => c.id === (prefillCourtId || courts[0]?.id));
+      const activeSlots = getSportSlots(activeCourt?.sport || 'padel');
       setCourtId(activeCourt ? activeCourt.id : courts[0]?.id || 'padel-1');
       setDate(prefillDate || '2024-10-30');
-      setStartTime(prefillTime || '19:00');
+      setStartTime(
+        prefillTime && activeSlots.includes(prefillTime)
+          ? prefillTime
+          : activeSlots[0] || '09:00'
+      );
       const baseP = activeCourt ? activeCourt.basePrice : 12000;
       setPrice(baseP);
       setPriceDisplay(baseP.toLocaleString('es-AR'));
@@ -257,6 +263,10 @@ export const BookingDrawer: React.FC<BookingDrawerProps> = ({
                             if (c) {
                               setPrice(c.basePrice);
                               setPriceDisplay(c.basePrice.toLocaleString('es-AR'));
+                              const slots = getSportSlots(c.sport);
+                              if (!slots.includes(startTime)) {
+                                setStartTime(slots[0]);
+                              }
                             }
                           }}
                           className="w-full mt-0.5 px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-900 focus:outline-none focus:border-[#0D5FAE]"
@@ -292,13 +302,21 @@ export const BookingDrawer: React.FC<BookingDrawerProps> = ({
                       </div>
 
                       <div>
-                        <label className="text-[10px] text-slate-400 font-semibold">Horario inicio</label>
-                        <input
-                          type="time"
+                        <label className="text-[10px] text-slate-400 font-semibold">Turno / Horario</label>
+                        <select
                           value={startTime}
                           onChange={(e) => setStartTime(e.target.value)}
                           className="w-full mt-0.5 px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-900 focus:outline-none focus:border-[#0D5FAE]"
-                        />
+                        >
+                          {getSportSlots(currentCourt?.sport || 'padel').map((slot) => {
+                            const endSlot = calculateEndTime(slot, currentCourt.sport);
+                            return (
+                              <option key={slot} value={slot}>
+                                {slot} a {endSlot} hs
+                              </option>
+                            );
+                          })}
+                        </select>
                       </div>
                     </div>
                   </div>

@@ -48,8 +48,8 @@ export interface Reservation {
   courtName: string;
   sport: SportType;
   date: string; // YYYY-MM-DD
-  startTime: string; // "18:00"
-  endTime: string; // "19:30" (Pádel/Tenis 1h30m, Fútbol 1h)
+  startTime: string; // "09:00"
+  endTime: string; // "10:30"
   person: Person;
   price: number; // Importe histórico inmutable fijado al crear la reserva
   suggestedPrice?: number;
@@ -63,6 +63,47 @@ export interface Reservation {
   blockReason?: BlockReason;
   notes?: string;
   createdAt: string;
+}
+
+// Horarios de turnos desde las 9am con 1h 30m para Pádel y Tenis:
+// 09:00 a 10:30, 10:30 a 12:00, 12:00 a 13:30, 13:30 a 15:00, 15:00 a 16:30, 16:30 a 18:00, 18:00 a 19:30, 19:30 a 21:00, 21:00 a 22:30, 22:30 a 00:00
+export const PADEL_TENIS_SLOTS: string[] = [
+  '09:00',
+  '10:30',
+  '12:00',
+  '13:30',
+  '15:00',
+  '16:30',
+  '18:00',
+  '19:30',
+  '21:00',
+  '22:30',
+];
+
+// Fútbol: turnos de 1 hora desde las 9am
+export const FUTBOL_SLOTS: string[] = [
+  '09:00',
+  '10:00',
+  '11:00',
+  '12:00',
+  '13:00',
+  '14:00',
+  '15:00',
+  '16:00',
+  '17:00',
+  '18:00',
+  '19:00',
+  '20:00',
+  '21:00',
+  '22:00',
+  '23:00',
+];
+
+export function getSportSlots(sport: SportType): string[] {
+  if (sport === 'padel' || sport === 'tenis') {
+    return PADEL_TENIS_SLOTS;
+  }
+  return FUTBOL_SLOTS;
 }
 
 // Duración oficial en minutos: Pádel y Tenis 90 min (1h 30m), Fútbol 60 min (1h)

@@ -35,17 +35,29 @@ export const AgendaView: React.FC<AgendaViewProps> = ({
   // Quick filters (Fudo style)
   const [onlyAvailable, setOnlyAvailable] = useState(false);
   const [onlyCovered, setOnlyCovered] = useState(false);
-  const [timeShift, setTimeShift] = useState<'prime' | 'all'>('prime');
+  const [timeShift, setTimeShift] = useState<'prime' | 'all'>('all');
 
   // Display mode: 'cards' (Fudo style - default, super intuitive) vs 'timeline' (Matriz tradicional)
   const [viewMode, setViewMode] = useState<'cards' | 'timeline'>('cards');
 
   // Duración según deporte: Pádel y Tenis son de 1 hora y media (90m), Fútbol es de 1 hora (60m)
+  // Arranca de las 09:00 a 10:30 y así sucesivamente en intervalos continuos
   const getSportSlots = (sport: SportType, shift: 'prime' | 'all'): string[] => {
     if (sport === 'padel' || sport === 'tenis') {
       return shift === 'prime'
         ? ['16:30', '18:00', '19:30', '21:00', '22:30']
-        : ['09:00', '10:30', '12:00', '15:00', '16:30', '18:00', '19:30', '21:00', '22:30'];
+        : [
+            '09:00',
+            '10:30',
+            '12:00',
+            '13:30',
+            '15:00',
+            '16:30',
+            '18:00',
+            '19:30',
+            '21:00',
+            '22:30',
+          ];
     }
     // Fútbol 7: turnos de 1 hora
     return shift === 'prime'
@@ -54,6 +66,8 @@ export const AgendaView: React.FC<AgendaViewProps> = ({
           '09:00',
           '10:00',
           '11:00',
+          '12:00',
+          '13:00',
           '14:00',
           '15:00',
           '16:00',

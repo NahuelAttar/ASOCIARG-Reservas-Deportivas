@@ -1,72 +1,53 @@
 export type SportType = 'futbol' | 'padel' | 'tenis';
 
+export interface ClubInfo {
+  id: string;
+  slug: string;
+  name: string;
+  tagline: string;
+  address: string;
+  city: string;
+  phone: string;
+  whatsapp: string;
+  instagram?: string;
+  logoLetter?: string;
+}
+
 export interface Court {
   id: string;
   name: string;
   sport: SportType;
   sportLabel: string;
-  basePrice: number;
+  price: number; // Precio fijado por el club para el turno (solo lectura para el público)
   isCovered?: boolean;
   surface?: string;
   description?: string;
 }
 
-export interface Person {
-  id: string;
-  name: string;
+export interface CustomerData {
+  firstName: string;
+  lastName: string;
   phone: string;
-  dni?: string;
-  isMember: boolean;
-  memberNumber?: string;
+  notes?: string;
 }
 
-// Estado conceptual del turno deportivo
-export type ReservationStatus =
-  | 'reservada'
-  | 'en_juego'
-  | 'finalizada'
-  | 'cancelada'
-  | 'no_asistio'
-  | 'bloqueada';
-
-// Estado conceptual de la cobranza
-export type PaymentStatus = 'pendiente' | 'pagada';
-
-// Medios de pago del club
-export type PaymentMethod =
-  | 'Efectivo'
-  | 'Transferencia'
-  | 'QR / Mercado Pago'
-  | 'Tarjeta'
-  | 'Otro';
-
-export type BlockReason = 'Mantenimiento' | 'Torneo' | 'Uso interno' | 'Otro';
-
-export interface Reservation {
+export interface PublicReservation {
   id: string;
+  bookingCode: string; // ej: "RES-8492"
+  clubId: string;
   courtId: string;
   courtName: string;
   sport: SportType;
+  sportLabel: string;
   date: string; // YYYY-MM-DD
-  startTime: string; // "09:00"
-  endTime: string; // "10:30"
-  person: Person;
-  price: number; // Importe histórico inmutable fijado al crear la reserva
-  suggestedPrice?: number;
-  status: ReservationStatus;
-  paymentStatus: PaymentStatus;
-  paymentMethod?: PaymentMethod;
-  customPaymentMethod?: string; // Descripción cuando corresponda "Otro"
-  paidAmount?: number;
-  paidAt?: string; // Fecha y hora en que se registró el cobro
-  isBlocked?: boolean;
-  blockReason?: BlockReason;
-  notes?: string;
+  startTime: string; // "19:00"
+  endTime: string; // "20:30"
+  price: number;
+  customer: CustomerData;
   createdAt: string;
 }
 
 // Horarios de turnos desde las 9am con 1h 30m para Pádel y Tenis:
-// 09:00 a 10:30, 10:30 a 12:00, 12:00 a 13:30, 13:30 a 15:00, 15:00 a 16:30, 16:30 a 18:00, 18:00 a 19:30, 19:30 a 21:00, 21:00 a 22:30, 22:30 a 00:00
 export const PADEL_TENIS_SLOTS: string[] = [
   '09:00',
   '10:30',
@@ -100,62 +81,22 @@ export const FUTBOL_SLOTS: string[] = [
 ];
 
 export function getSportSlots(sport: SportType): string[] {
-  if (sport === 'padel' || sport === 'tenis') {
-    return PADEL_TENIS_SLOTS;
-  }
-  return FUTBOL_SLOTS;
+  return sport === 'futbol' ? FUTBOL_SLOTS : PADEL_TENIS_SLOTS;
 }
 
-// Duración oficial en minutos: Pádel y Tenis 90 min (1h 30m), Fútbol 60 min (1h)
 export function getSportDurationMinutes(sport: SportType): number {
-  if (sport === 'padel' || sport === 'tenis') {
-    return 90;
-  }
-  return 60;
+  return sport === 'futbol' ? 60 : 90;
 }
 
-// Calcula el horario de fin exacto según el deporte (1h 30m para pádel y tenis, 1h para fútbol)
 export function calculateEndTime(startTime: string, sport: SportType): string {
-  const parts = startTime.split(':');
-  const h = parseInt(parts[0], 10) || 0;
-  const m = parseInt(parts[1], 10) || 0;
+  const [hStr, mStr] = startTime.split(':');
+  const startHours = parseInt(hStr, 10);
+  const startMins = parseInt(mStr, 10);
   const duration = getSportDurationMinutes(sport);
 
-  const totalMinutes = h * 60 + m + duration;
-  const endH = Math.floor(totalMinutes / 60) % 24;
-  const endM = totalMinutes % 60;
+  const totalMins = startHours * 60 + startMins + duration;
+  const endHours = Math.floor(totalMins / 60) % 24;
+  const endMinutes = totalMins % 60;
 
-  return `${endH.toString().padStart(2, '0')}:${endM.toString().padStart(2, '0')}`;
-}
-
-// Determina el estado de juego de la reserva según horario actual
-export function computeReservationStatus(
-  reservation: Reservation,
-  currentDate = '2024-10-30',
-  currentTime = '20:30'
-): ReservationStatus {
-  if (
-    reservation.status === 'cancelada' ||
-    reservation.status === 'no_asistio' ||
-    reservation.status === 'bloqueada'
-  ) {
-    return reservation.status;
-  }
-
-  // Comparación por fecha
-  if (reservation.date < currentDate) {
-    return 'finalizada';
-  }
-  if (reservation.date > currentDate) {
-    return 'reservada';
-  }
-
-  // Misma fecha: comparar por horario
-  if (currentTime < reservation.startTime) {
-    return 'reservada';
-  }
-  if (currentTime >= reservation.startTime && currentTime < reservation.endTime) {
-    return 'en_juego';
-  }
-  return 'finalizada';
+  return `${String(endHours).padStart(2, '0')}:${String(endMinutes).padStart(2, '0')}`;
 }

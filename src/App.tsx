@@ -1,45 +1,36 @@
 import React, { useState } from 'react';
-import { Header } from './components/Header';
-import { AgendaView } from './components/AgendaView';
-import { ReservationsView } from './components/ReservationsView';
-import { BookingDrawer } from './components/BookingDrawer';
-import { PaymentModal } from './components/PaymentModal';
-import { BlockSlotModal } from './components/BlockSlotModal';
-import { BaseRatesModal } from './components/BaseRatesModal';
+import { PublicHeader } from './components/PublicHeader';
+import { PublicBookingView } from './components/PublicBookingView';
+import { PublicBookingModal } from './components/PublicBookingModal';
+import { BookingConfirmationModal } from './components/BookingConfirmationModal';
 import { Toast } from './components/Toast';
 
 import {
+  MOCK_CLUB,
   INITIAL_COURTS,
-  INITIAL_PEOPLE,
-  INITIAL_RESERVATIONS,
+  INITIAL_PUBLIC_RESERVATIONS,
 } from './data/mockData';
-import { Court, Person, Reservation, BlockReason, PaymentMethod } from './types';
+import { Court, CustomerData, PublicReservation } from './types';
 
 export default function App() {
-  const [currentTab, setCurrentTab] = useState<'agenda' | 'reservas'>('agenda');
+  const [club] = useState(MOCK_CLUB);
   const [currentDate, setCurrentDate] = useState<string>('2024-10-30');
+  const [courts] = useState<Court[]>(INITIAL_COURTS);
+  const [reservations, setReservations] = useState<PublicReservation[]>(
+    INITIAL_PUBLIC_RESERVATIONS
+  );
 
-  // Core Data State
-  const [courts, setCourts] = useState<Court[]>(INITIAL_COURTS);
-  const [people, setPeople] = useState<Person[]>(INITIAL_PEOPLE);
-  const [reservations, setReservations] = useState<Reservation[]>(INITIAL_RESERVATIONS);
+  // Modal for filling customer booking data
+  const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
+  const [selectedCourt, setSelectedCourt] = useState<Court | null>(null);
+  const [selectedTime, setSelectedTime] = useState<string>('19:00');
 
-  // Unified Drawer state (Handles both New and Detail)
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const [drawerMode, setDrawerMode] = useState<'new' | 'detail'>('new');
-  const [selectedReservation, setSelectedReservation] = useState<Reservation | null>(null);
-  const [prefillCourtId, setPrefillCourtId] = useState<string>('padel-1');
-  const [prefillTime, setPrefillTime] = useState<string>('19:00');
+  // Modal for displaying booking receipt voucher
+  const [confirmedReservation, setConfirmedReservation] =
+    useState<PublicReservation | null>(null);
+  const [isConfirmationOpen, setIsConfirmationOpen] = useState(false);
 
-  // Dedicated Payment Modal state
-  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
-  const [reservationToPay, setReservationToPay] = useState<Reservation | null>(null);
-
-  // Utility modals
-  const [isBlockModalOpen, setIsBlockModalOpen] = useState(false);
-  const [isBaseRatesModalOpen, setIsBaseRatesModalOpen] = useState(false);
-
-  // Toast feedback
+  // Feedback toast
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   const showToast = (msg: string) => {
@@ -47,259 +38,128 @@ export default function App() {
     setTimeout(() => setToastMessage(null), 3500);
   };
 
-  // Open drawer for a new booking from an agenda slot
-  const handleSelectSlot = (courtId: string, time: string) => {
-    setPrefillCourtId(courtId);
-    setPrefillTime(time);
-    setSelectedReservation(null);
-    setDrawerMode('new');
-    setIsDrawerOpen(true);
+  // Open booking modal when a user taps an available slot
+  const handleSelectSlot = (court: Court, startTime: string) => {
+    setSelectedCourt(court);
+    setSelectedTime(startTime);
+    setIsBookingModalOpen(true);
   };
 
-  // Open drawer from top bar "+ Nueva reserva"
-  const handleOpenNewBookingGeneral = () => {
-    setPrefillCourtId(courts[0]?.id || 'padel-1');
-    setPrefillTime('19:00');
-    setSelectedReservation(null);
-    setDrawerMode('new');
-    setIsDrawerOpen(true);
-  };
-
-  // Open drawer to inspect an existing reservation
-  const handleSelectReservation = (reservation: Reservation) => {
-    setSelectedReservation(reservation);
-    setDrawerMode('detail');
-    setIsDrawerOpen(true);
-  };
-
-  // Open dedicated Payment Modal for a reservation
-  const handleOpenPaymentModal = (reservation: Reservation) => {
-    setReservationToPay(reservation);
-    setIsPaymentModalOpen(true);
-  };
-
-  // Confirm payment registration
-  const handleConfirmPayment = (
-    reservationId: string,
-    paymentMethod: PaymentMethod,
-    amount: number,
-    customPaymentMethod?: string
-  ) => {
-    const paidAt = new Date().toISOString();
-
-    setReservations((prev) =>
-      prev.map((r) =>
-        r.id === reservationId
-          ? {
-              ...r,
-              paymentStatus: 'pagada',
-              paymentMethod,
-              customPaymentMethod: paymentMethod === 'Otro' ? customPaymentMethod : undefined,
-              paidAmount: amount,
-              paidAt,
-            }
-          : r
-      )
-    );
-
-    // Update selected reservation in drawer if open
-    setSelectedReservation((prev) =>
-      prev && prev.id === reservationId
-        ? {
-            ...prev,
-            paymentStatus: 'pagada',
-            paymentMethod,
-            customPaymentMethod: paymentMethod === 'Otro' ? customPaymentMethod : undefined,
-            paidAmount: amount,
-            paidAt,
-          }
-        : prev
-    );
-
-    const methodLabel =
-      paymentMethod === 'Otro' && customPaymentMethod
-        ? `Otro (${customPaymentMethod})`
-        : paymentMethod;
-    showToast(`Cobro registrado: ${methodLabel} · $${amount.toLocaleString('es-AR')}`);
-  };
-
-  // Save or edit a reservation
-  // Al crear: Estado de reserva: Reservada, Estado de cobro: Pendiente, Importe inmutable guardado
-  const handleSaveReservation = (data: Partial<Reservation> & { id?: string }) => {
-    if (data.id) {
-      // Editing existing reservation
-      setReservations(
-        reservations.map((r) => (r.id === data.id ? ({ ...r, ...data } as Reservation) : r))
-      );
-      showToast('Reserva actualizada');
-    } else {
-      // Creating new reservation: No se pregunta pago, queda como Reservada y Pendiente de cobro
-      const targetCourt = courts.find((c) => c.id === data.courtId) || courts[0];
-      const newRes: Reservation = {
-        id: `res-${Date.now()}`,
-        courtId: data.courtId || targetCourt.id,
-        courtName: data.courtName || targetCourt.name,
-        sport: data.sport || targetCourt.sport,
-        date: data.date || currentDate,
-        startTime: data.startTime || '19:00',
-        endTime: data.endTime || '20:00',
-        person: data.person || people[0],
-        price: data.price || targetCourt.basePrice, // Importe histórico guardado
-        suggestedPrice: targetCourt.basePrice,
-        status: 'reservada',
-        paymentStatus: 'pendiente',
-        notes: data.notes,
-        createdAt: new Date().toISOString(),
-      };
-
-      // Also remember new person if external
-      if (newRes.person.id.startsWith('ext-') && !people.some((p) => p.id === newRes.person.id)) {
-        setPeople([...people, newRes.person]);
-      }
-
-      setReservations([newRes, ...reservations]);
-      showToast('Reserva confirmada');
-    }
-
-    setIsDrawerOpen(false);
-  };
-
-  // Cancel reservation
-  const handleCancelReservation = (id: string) => {
-    setReservations(
-      reservations.map((r) => (r.id === id ? { ...r, status: 'cancelada' } : r))
-    );
-    setIsDrawerOpen(false);
-    showToast('Turno cancelado y liberado');
-  };
-
-  // Mark no show
-  const handleMarkNoShow = (id: string) => {
-    setReservations(
-      reservations.map((r) => (r.id === id ? { ...r, status: 'no_asistio' } : r))
-    );
-    setIsDrawerOpen(false);
-    showToast('Marcado como "No se presentó"');
-  };
-
-  // Block a slot directly from agenda
-  const handleConfirmBlock = (data: {
-    courtId: string;
+  // Confirm booking
+  const handleConfirmReservation = (data: {
+    court: Court;
     startTime: string;
     endTime: string;
-    reason: BlockReason;
-    notes?: string;
+    date: string;
+    customer: CustomerData;
   }) => {
-    const court = courts.find((c) => c.id === data.courtId);
-    const blockRes: Reservation = {
-      id: `block-${Date.now()}`,
-      courtId: data.courtId,
-      courtName: court ? court.name : 'Cancha',
-      sport: court ? court.sport : 'padel',
-      date: currentDate,
+    const randomCode = Math.floor(1000 + Math.random() * 9000);
+    const newReservation: PublicReservation = {
+      id: `res-${Date.now()}`,
+      bookingCode: `RES-${randomCode}`,
+      clubId: club.id,
+      courtId: data.court.id,
+      courtName: data.court.name,
+      sport: data.court.sport,
+      sportLabel: data.court.sportLabel,
+      date: data.date,
       startTime: data.startTime,
       endTime: data.endTime,
-      person: {
-        id: 'staff-block',
-        name: `Bloqueo: ${data.reason}`,
-        phone: '',
-        isMember: false,
-      },
-      price: 0,
-      suggestedPrice: 0,
-      status: 'bloqueada',
-      paymentStatus: 'pagada',
-      isBlocked: true,
-      blockReason: data.reason,
-      notes: data.notes,
+      price: data.court.price,
+      customer: data.customer,
       createdAt: new Date().toISOString(),
     };
 
-    setReservations([blockRes, ...reservations]);
-    showToast(`Cancha bloqueada por ${data.reason}`);
+    setReservations((prev) => [newReservation, ...prev]);
+    setIsBookingModalOpen(false);
+    setConfirmedReservation(newReservation);
+    setIsConfirmationOpen(true);
+    showToast(`¡Turno reservado con éxito! Código: ${newReservation.bookingCode}`);
   };
 
-  // Update base rate for a court (NO altera las reservas ya creadas)
-  const handleUpdateCourtPrice = (courtId: string, newPrice: number) => {
-    setCourts(
-      courts.map((c) => (c.id === courtId ? { ...c, basePrice: newPrice } : c))
-    );
-    showToast('Tarifa base actualizada (reservas previas conservan su importe)');
+  const handleCloseConfirmation = () => {
+    setIsConfirmationOpen(false);
+    setConfirmedReservation(null);
   };
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col font-sans selection:bg-[#0D5FAE]/15 selection:text-[#0D5FAE]">
-      {/* Header */}
-      <Header
-        currentTab={currentTab}
-        onSelectTab={setCurrentTab}
+      {/* Public Header with Club Identity, Link and Date Selector */}
+      <PublicHeader
+        club={club}
         currentDate={currentDate}
         onDateChange={setCurrentDate}
-        onOpenNewBooking={handleOpenNewBookingGeneral}
-        onOpenBlockSlot={() => setIsBlockModalOpen(true)}
-        onOpenBaseRates={() => setIsBaseRatesModalOpen(true)}
       />
 
-      {/* Main Viewport */}
-      <main className="flex-1 max-w-[1440px] w-full mx-auto px-3 sm:px-6 py-4">
-        {currentTab === 'agenda' ? (
-          <AgendaView
-            courts={courts}
-            reservations={reservations}
-            currentDate={currentDate}
-            onDateChange={setCurrentDate}
-            onSelectSlot={handleSelectSlot}
-            onSelectReservation={handleSelectReservation}
-          />
-        ) : (
-          <ReservationsView
-            reservations={reservations}
-            courts={courts}
-            onSelectReservation={handleSelectReservation}
-            onOpenPaymentModal={handleOpenPaymentModal}
-          />
-        )}
+      {/* Main Public Portal Viewport */}
+      <main className="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 py-4 sm:py-6">
+        {/* Portal Greeting Banner */}
+        <div className="mb-4 bg-gradient-to-r from-[#0D5FAE] to-[#1E3A8A] text-white rounded-3xl p-5 sm:p-7 shadow-xs relative overflow-hidden">
+          <div className="relative z-10 max-w-2xl">
+            <span className="text-[11px] font-extrabold uppercase tracking-widest text-blue-200">
+              {club.name}
+            </span>
+            <h2 className="text-xl sm:text-2xl font-black tracking-tight mt-1">
+              Reservá tu cancha online
+            </h2>
+            <p className="text-xs sm:text-sm text-blue-100 mt-1 leading-relaxed">
+              Elegí el deporte, la cancha y el horario que prefieras. Tu turno queda registrado inmediatamente en el club.
+            </p>
+          </div>
+          {/* Subtle decoration */}
+          <div className="absolute -right-6 -bottom-8 w-40 h-40 bg-white/5 rounded-full pointer-events-none" />
+        </div>
+
+        {/* Public Booking View: Sport tabs, Court cards, and available time slots */}
+        <PublicBookingView
+          courts={courts}
+          reservations={reservations}
+          currentDate={currentDate}
+          onSelectSlot={handleSelectSlot}
+        />
       </main>
 
-      {/* Side Drawer: New Booking & Existing Booking Details */}
-      <BookingDrawer
-        isOpen={isDrawerOpen}
-        onClose={() => setIsDrawerOpen(false)}
-        courts={courts}
-        people={people}
-        mode={drawerMode}
-        reservation={selectedReservation}
-        prefillCourtId={prefillCourtId}
-        prefillTime={prefillTime}
-        prefillDate={currentDate}
-        onSaveReservation={handleSaveReservation}
-        onCancelReservation={handleCancelReservation}
-        onMarkNoShow={handleMarkNoShow}
-        onOpenPaymentModal={handleOpenPaymentModal}
+      {/* Public Footer */}
+      <footer className="bg-white border-t border-slate-200/80 py-6 px-4 text-center text-xs text-slate-400">
+        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <span className="font-extrabold text-slate-800">{club.name}</span>
+            <span>·</span>
+            <span>{club.address}</span>
+          </div>
+
+          <div className="flex items-center gap-4 text-[11px] text-slate-500 font-medium">
+            <span>Tel: {club.phone}</span>
+            <a
+              href={`https://api.whatsapp.com/send?phone=${club.whatsapp}`}
+              target="_blank"
+              rel="noreferrer"
+              className="text-[#0D5FAE] hover:underline flex items-center gap-1"
+            >
+              <span className="material-symbols-outlined text-[13px]">chat</span>
+              <span>Consultas por WhatsApp</span>
+            </a>
+          </div>
+        </div>
+      </footer>
+
+      {/* Booking Form Modal */}
+      <PublicBookingModal
+        isOpen={isBookingModalOpen}
+        onClose={() => setIsBookingModalOpen(false)}
+        club={club}
+        court={selectedCourt}
+        startTime={selectedTime}
+        date={currentDate}
+        onConfirmReservation={handleConfirmReservation}
       />
 
-      {/* Dedicated Payment Modal: Cobrar Turno */}
-      <PaymentModal
-        isOpen={isPaymentModalOpen}
-        onClose={() => setIsPaymentModalOpen(false)}
-        reservation={reservationToPay}
-        onConfirmPayment={handleConfirmPayment}
-      />
-
-      {/* Quick Block Slot Modal */}
-      <BlockSlotModal
-        isOpen={isBlockModalOpen}
-        onClose={() => setIsBlockModalOpen(false)}
-        courts={courts}
-        onConfirmBlock={handleConfirmBlock}
-      />
-
-      {/* Base Rates Simple Configuration Modal */}
-      <BaseRatesModal
-        isOpen={isBaseRatesModalOpen}
-        onClose={() => setIsBaseRatesModalOpen(false)}
-        courts={courts}
-        onUpdateCourtPrice={handleUpdateCourtPrice}
+      {/* Booking Confirmation Receipt Modal */}
+      <BookingConfirmationModal
+        isOpen={isConfirmationOpen}
+        reservation={confirmedReservation}
+        club={club}
+        onClose={handleCloseConfirmation}
       />
 
       {/* Floating feedback toast */}

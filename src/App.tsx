@@ -216,7 +216,6 @@ function PortalApp() {
       <PublicBookingModal
         isOpen={isBookingModalOpen}
         onClose={() => setIsBookingModalOpen(false)}
-        club={club}
         court={selectedCourt}
         startTime={selectedTime}
         date={currentDate}

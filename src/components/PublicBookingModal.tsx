@@ -1,13 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Court, CustomerData, calculateEndTime, ClubInfo } from '../types';
+import { Court, CustomerData, calculateEndTime } from '../types';
 import { formatDateReadable, formatSlotInterval } from '../utils/dateUtils';
 import { isValidPhone, normalizePhone } from '../utils/phoneUtils';
 
 interface PublicBookingModalProps {
   isOpen: boolean;
   onClose: () => void;
-  club?: ClubInfo;
   court: Court | null;
   startTime: string;
   date: string;
@@ -23,7 +22,6 @@ interface PublicBookingModalProps {
 export const PublicBookingModal: React.FC<PublicBookingModalProps> = ({
   isOpen,
   onClose,
-  club: _club,
   court,
   startTime,
   date,

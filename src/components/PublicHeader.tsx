@@ -64,10 +64,10 @@ export const PublicHeader: React.FC<PublicHeaderProps> = ({
 
         {/* Main Club Navigation & Date Selector */}
         <div className="w-full max-w-7xl mx-auto px-3 sm:px-6">
-          <div className="h-16 flex items-center justify-between gap-3 sm:gap-6">
+          <div className="h-14 sm:h-16 flex items-center justify-between gap-2 sm:gap-6">
             {/* Club Identity */}
-            <div className="flex items-center gap-3 min-w-0">
-              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-gradient-to-br from-[#0D5FAE] to-[#1E3A8A] flex items-center justify-center text-white shadow-xs font-black text-base shrink-0">
+            <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl bg-gradient-to-br from-[#0D5FAE] to-[#1E3A8A] flex items-center justify-center text-white shadow-xs font-black text-sm sm:text-base shrink-0">
                 {club.logoLetter || club.name.charAt(0)}
               </div>
               <div className="min-w-0">
@@ -158,7 +158,7 @@ export const PublicHeader: React.FC<PublicHeaderProps> = ({
                 href={`https://api.whatsapp.com/send?phone=${club.whatsapp}`}
                 target="_blank"
                 rel="noreferrer"
-                className="p-2 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center justify-center text-xs font-bold"
+                className="w-9 h-9 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center justify-center transition-colors hover:bg-emerald-100"
                 title="Contacto directo por WhatsApp"
               >
                 <span className="material-symbols-outlined text-[18px]">chat</span>
@@ -168,25 +168,26 @@ export const PublicHeader: React.FC<PublicHeaderProps> = ({
         </div>
 
         {/* Sub-header Bar for Mobile Screen (Date selector) */}
-        <div className="sm:hidden w-full border-t border-slate-100 bg-slate-50/95 px-3 py-2 flex items-center justify-between gap-2 overflow-x-auto no-scrollbar">
-          <div className="flex items-center gap-1 p-0.5 bg-slate-200/80 rounded-full text-xs font-medium shrink-0">
+        <div className="sm:hidden w-full border-t border-slate-100 bg-slate-50/95 px-3 py-2 flex items-center justify-between gap-2">
+          {/* Quick Day Stepper & Presets */}
+          <div className="flex items-center gap-0.5 p-0.5 bg-slate-200/90 rounded-full text-xs font-medium shrink-0">
             <button
               type="button"
               disabled={isAtMinDate}
               onClick={() => handleStep(-1)}
-              className={`w-6 h-6 rounded-full flex items-center justify-center ${
-                isAtMinDate ? 'text-slate-300 opacity-40 cursor-not-allowed' : 'text-slate-600 hover:bg-slate-300 cursor-pointer'
+              className={`w-7 h-7 rounded-full flex items-center justify-center transition-colors ${
+                isAtMinDate ? 'text-slate-300 opacity-40 cursor-not-allowed' : 'text-slate-700 hover:bg-slate-300 active:bg-slate-400 cursor-pointer'
               }`}
               title={isAtMinDate ? 'No se pueden consultar fechas pasadas' : 'Día anterior'}
             >
-              <span className="material-symbols-outlined text-[14px]">chevron_left</span>
+              <span className="material-symbols-outlined text-[15px]">chevron_left</span>
             </button>
 
             <button
               type="button"
               onClick={() => onDateChange(todayStr)}
-              className={`px-2.5 py-1 rounded-full transition-colors cursor-pointer text-xs ${
-                isToday ? 'bg-slate-900 text-white font-bold shadow-xs' : 'text-slate-600'
+              className={`h-7 px-2.5 rounded-full transition-colors cursor-pointer text-xs font-bold flex items-center justify-center ${
+                isToday ? 'bg-slate-900 text-white shadow-xs' : 'text-slate-700'
               }`}
             >
               Hoy
@@ -194,8 +195,8 @@ export const PublicHeader: React.FC<PublicHeaderProps> = ({
             <button
               type="button"
               onClick={() => onDateChange(tomorrowStr)}
-              className={`px-2.5 py-1 rounded-full transition-colors cursor-pointer text-xs ${
-                isTomorrow ? 'bg-slate-900 text-white font-bold shadow-xs' : 'text-slate-600'
+              className={`h-7 px-2.5 rounded-full transition-colors cursor-pointer text-xs font-bold flex items-center justify-center ${
+                isTomorrow ? 'bg-slate-900 text-white shadow-xs' : 'text-slate-700'
               }`}
             >
               Mañana
@@ -204,33 +205,27 @@ export const PublicHeader: React.FC<PublicHeaderProps> = ({
             <button
               type="button"
               onClick={() => handleStep(1)}
-              className="w-6 h-6 rounded-full flex items-center justify-center text-slate-600 hover:bg-slate-300 cursor-pointer"
+              className="w-7 h-7 rounded-full flex items-center justify-center text-slate-700 hover:bg-slate-300 active:bg-slate-400 cursor-pointer transition-colors"
               title="Día siguiente"
             >
-              <span className="material-symbols-outlined text-[14px]">chevron_right</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setIsDatePickerOpen(true)}
-              className={`px-2.5 py-1 rounded-full transition-colors cursor-pointer text-xs flex items-center gap-1 ${
-                !isToday && !isTomorrow
-                  ? 'bg-[#0D5FAE] text-white font-bold shadow-xs'
-                  : 'text-slate-700 bg-white shadow-2xs'
-              }`}
-            >
-              <span className="material-symbols-outlined text-[13px]">calendar_month</span>
-              <span>{!isToday && !isTomorrow ? formatDateShort(currentDate) : 'Fecha'}</span>
+              <span className="material-symbols-outlined text-[15px]">chevron_right</span>
             </button>
           </div>
 
+          {/* Unified Date Trigger Button (opens Calendar Modal) */}
           <button
             type="button"
             onClick={() => setIsDatePickerOpen(true)}
-            className="text-[11px] text-[#0D5FAE] font-bold truncate flex items-center gap-1 cursor-pointer hover:underline"
-            title="Cambiar fecha"
+            className={`h-8 px-2.5 rounded-full text-xs font-bold flex items-center gap-1 transition-all cursor-pointer shadow-2xs shrink-0 ${
+              !isToday && !isTomorrow
+                ? 'bg-[#0D5FAE] text-white'
+                : 'bg-white text-slate-800 border border-slate-200 hover:bg-slate-100'
+            }`}
+            title="Abrir calendario para elegir otra fecha"
           >
-            <span>{formatDateReadable(currentDate)}</span>
+            <span className="material-symbols-outlined text-[15px]">calendar_month</span>
+            <span className="truncate">{formatDateShort(currentDate)}</span>
+            <span className="material-symbols-outlined text-[13px] opacity-70">expand_more</span>
           </button>
         </div>
       </header>

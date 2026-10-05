@@ -118,7 +118,7 @@ export const PublicBookingModal: React.FC<PublicBookingModalProps> = ({
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4">
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 overflow-y-auto">
           {/* Fondo oscuro */}
           <motion.div
             initial={{ opacity: 0 }}
@@ -126,19 +126,19 @@ export const PublicBookingModal: React.FC<PublicBookingModalProps> = ({
             exit={{ opacity: 0 }}
             transition={{ duration: 0.16 }}
             onClick={onClose}
-            className="fixed inset-0 bg-slate-900/50 backdrop-blur-xs cursor-pointer"
+            className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs cursor-pointer"
           />
 
           {/* Tarjeta del modal */}
           <motion.div
-            initial={{ opacity: 0, scale: 0.95, y: 15 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: 15 }}
-            transition={{ type: 'spring', damping: 26, stiffness: 320 }}
-            className="relative w-full max-w-md max-h-[92vh] flex flex-col bg-white rounded-3xl shadow-2xl overflow-hidden border border-slate-200 z-10"
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 30 }}
+            transition={{ type: 'spring', damping: 28, stiffness: 320 }}
+            className="relative w-full sm:max-w-md max-h-[92vh] sm:max-h-[90vh] flex flex-col bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden border border-slate-200 z-10 my-0 sm:my-auto"
           >
             {/* Cabecera */}
-            <div className="px-5 py-4 bg-slate-50 border-b border-slate-100 flex items-center justify-between shrink-0">
+            <div className="px-4 sm:px-5 py-3.5 sm:py-4 bg-slate-50 border-b border-slate-100 flex items-center justify-between shrink-0">
               <div>
                 <div className="flex items-center gap-2">
                   <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#0D5FAE] bg-blue-50 px-2 py-0.5 rounded-full">
@@ -155,19 +155,19 @@ export const PublicBookingModal: React.FC<PublicBookingModalProps> = ({
               <button
                 type="button"
                 onClick={onClose}
-                className="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-200 transition-colors cursor-pointer"
+                className="w-9 h-9 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-700 bg-slate-100 hover:bg-slate-200 transition-colors cursor-pointer"
                 title="Cerrar"
                 aria-label="Cerrar modal"
               >
-                <span className="material-symbols-outlined text-[18px]">close</span>
+                <span className="material-symbols-outlined text-[20px]">close</span>
               </button>
             </div>
 
             {/* PASO 1: DATOS (Requisito #11: Nombre, Apellido, Teléfono únicamente) */}
             {step === 'form' && (
-              <form onSubmit={handleProceedToReview} className="flex-1 overflow-y-auto p-5 flex flex-col gap-4 text-xs">
+              <form onSubmit={handleProceedToReview} className="flex-1 overflow-y-auto p-4 sm:p-5 flex flex-col gap-3.5 sm:gap-4 text-xs">
                 {/* Resumen del turno seleccionado */}
-                <div className="p-3.5 bg-blue-50/70 rounded-2xl border border-blue-100 flex items-center justify-between">
+                <div className="p-3 sm:p-3.5 bg-blue-50/70 rounded-2xl border border-blue-100 flex items-center justify-between">
                   <div className="flex flex-col gap-0.5">
                     <span className="text-[11px] font-semibold text-slate-500 capitalize">
                       {formattedDate}
@@ -204,10 +204,12 @@ export const PublicBookingModal: React.FC<PublicBookingModalProps> = ({
                         type="text"
                         required
                         autoFocus
+                        autoComplete="given-name"
+                        autoCapitalize="words"
                         value={firstName}
                         onChange={(e) => setFirstName(e.target.value)}
                         placeholder="Ej: Nahuel"
-                        className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-900 placeholder-slate-400 focus:outline-none focus:border-[#0D5FAE] focus:bg-white"
+                        className="w-full h-11 sm:h-10 px-3.5 bg-slate-50 border border-slate-200 rounded-xl text-base sm:text-xs font-semibold text-slate-900 placeholder-slate-400 focus:outline-none focus:border-[#0D5FAE] focus:bg-white transition-colors"
                       />
                     </div>
 
@@ -219,10 +221,12 @@ export const PublicBookingModal: React.FC<PublicBookingModalProps> = ({
                         id="booking-last-name"
                         type="text"
                         required
+                        autoComplete="family-name"
+                        autoCapitalize="words"
                         value={lastName}
                         onChange={(e) => setLastName(e.target.value)}
                         placeholder="Ej: Attar"
-                        className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-900 placeholder-slate-400 focus:outline-none focus:border-[#0D5FAE] focus:bg-white"
+                        className="w-full h-11 sm:h-10 px-3.5 bg-slate-50 border border-slate-200 rounded-xl text-base sm:text-xs font-semibold text-slate-900 placeholder-slate-400 focus:outline-none focus:border-[#0D5FAE] focus:bg-white transition-colors"
                       />
                     </div>
                   </div>
@@ -234,11 +238,13 @@ export const PublicBookingModal: React.FC<PublicBookingModalProps> = ({
                     <input
                       id="booking-phone"
                       type="tel"
+                      inputMode="tel"
+                      autoComplete="tel"
                       required
                       value={phone}
                       onChange={(e) => setPhone(e.target.value)}
                       placeholder="Ej: 3564-445566"
-                      className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-900 placeholder-slate-400 focus:outline-none focus:border-[#0D5FAE] focus:bg-white"
+                      className="w-full h-11 sm:h-10 px-3.5 bg-slate-50 border border-slate-200 rounded-xl text-base sm:text-xs font-semibold text-slate-900 placeholder-slate-400 focus:outline-none focus:border-[#0D5FAE] focus:bg-white transition-colors"
                     />
                     <span className="text-[10px] text-slate-400">
                       Usaremos este número para la confirmación de tu reserva.
@@ -247,18 +253,18 @@ export const PublicBookingModal: React.FC<PublicBookingModalProps> = ({
                 </div>
 
                 {/* Acciones */}
-                <div className="pt-2 flex items-center gap-3 mt-auto">
+                <div className="pt-2 pb-3 sm:pb-0 flex items-center gap-3 mt-auto">
                   <button
                     type="button"
                     onClick={onClose}
-                    className="py-3 px-5 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition-colors cursor-pointer"
+                    className="h-11 sm:h-10 px-5 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition-colors cursor-pointer"
                   >
                     Cancelar
                   </button>
 
                   <button
                     type="submit"
-                    className="flex-1 py-3 px-6 rounded-full bg-[#0D5FAE] hover:bg-[#094785] text-white font-extrabold text-xs sm:text-sm transition-all shadow-md cursor-pointer flex items-center justify-center gap-2"
+                    className="flex-1 h-11 sm:h-10 px-6 rounded-full bg-[#0D5FAE] hover:bg-[#094785] text-white font-extrabold text-xs sm:text-sm transition-all shadow-md cursor-pointer flex items-center justify-center gap-2"
                   >
                     <span>Revisar reserva</span>
                     <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
@@ -269,7 +275,7 @@ export const PublicBookingModal: React.FC<PublicBookingModalProps> = ({
 
             {/* PASO 2: REVISIÓN ANTES DE CONFIRMAR (Requisito #13: Deporte, Cancha, Fecha, Horario, Nombre, Teléfono, Total) */}
             {step === 'review' && (
-              <div className="flex-1 overflow-y-auto p-5 flex flex-col gap-4 text-xs">
+              <div className="flex-1 overflow-y-auto p-4 sm:p-5 flex flex-col gap-3.5 sm:gap-4 text-xs">
                 {/* Alerta de error si el turno dejó de estar disponible (Requisito #17) */}
                 {confirmError && (
                   <div className="p-3.5 rounded-2xl bg-amber-50 border border-amber-300 text-amber-900 flex items-start gap-2.5">
@@ -292,7 +298,7 @@ export const PublicBookingModal: React.FC<PublicBookingModalProps> = ({
                     <div className="text-xs font-semibold text-slate-600 capitalize">
                       {formattedDate}
                     </div>
-                    <div className="flex items-center justify-between text-sm font-black text-[#0D5FAE] tabular-nums">
+                    <div className="flex flex-col xs:flex-row xs:items-center xs:justify-between text-sm font-black text-[#0D5FAE] tabular-nums gap-1">
                       <span>{slotIntervalText}</span>
                       <span className="text-xs font-semibold text-slate-500">
                         Duración: {court.sport === 'futbol' ? '1 hora' : '1h 30m'}
@@ -323,7 +329,7 @@ export const PublicBookingModal: React.FC<PublicBookingModalProps> = ({
                 </div>
 
                 {/* Acciones */}
-                <div className="pt-2 flex items-center gap-3 mt-auto">
+                <div className="pt-2 pb-3 sm:pb-0 flex items-center gap-3 mt-auto">
                   <button
                     type="button"
                     disabled={isSubmitting}
@@ -331,7 +337,7 @@ export const PublicBookingModal: React.FC<PublicBookingModalProps> = ({
                       setConfirmError(null);
                       setStep('form');
                     }}
-                    className="py-3 px-4 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition-colors cursor-pointer flex items-center gap-1"
+                    className="h-11 sm:h-10 px-4 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition-colors cursor-pointer flex items-center gap-1.5"
                   >
                     <span className="material-symbols-outlined text-[16px]">arrow_back</span>
                     <span>Modificar</span>
@@ -341,7 +347,7 @@ export const PublicBookingModal: React.FC<PublicBookingModalProps> = ({
                     type="button"
                     disabled={isSubmitting}
                     onClick={handleFinalConfirm}
-                    className={`flex-1 py-3 px-6 rounded-full font-extrabold text-xs sm:text-sm transition-all shadow-md flex items-center justify-center gap-2 ${
+                    className={`flex-1 h-11 sm:h-10 px-6 rounded-full font-extrabold text-xs sm:text-sm transition-all shadow-md flex items-center justify-center gap-2 ${
                       isSubmitting
                         ? 'bg-slate-400 text-white cursor-not-allowed'
                         : 'bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer'

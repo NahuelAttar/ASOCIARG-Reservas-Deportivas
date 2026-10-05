@@ -75,33 +75,33 @@ export const BookingConfirmationModal: React.FC<BookingConfirmationModalProps> =
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4">
+      <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 overflow-y-auto">
         {/* Fondo */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           onClick={onClose}
-          className="fixed inset-0 bg-slate-900/50 backdrop-blur-xs cursor-pointer"
+          className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs cursor-pointer"
         />
 
         {/* Modal Comprobante */}
         <motion.div
-          initial={{ opacity: 0, scale: 0.92, y: 15 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.92, y: 15 }}
-          transition={{ type: 'spring', damping: 25, stiffness: 280 }}
-          className="relative w-full max-w-md max-h-[92vh] bg-white rounded-3xl shadow-2xl overflow-hidden border border-slate-200 z-10 flex flex-col"
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: 30 }}
+          transition={{ type: 'spring', damping: 28, stiffness: 320 }}
+          className="relative w-full sm:max-w-md max-h-[92vh] sm:max-h-[90vh] bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden border border-slate-200 z-10 flex flex-col my-0 sm:my-auto"
         >
           {/* Cabecera */}
-          <div className="bg-gradient-to-br from-emerald-600 to-teal-700 text-white p-5 sm:p-6 text-center relative overflow-hidden shrink-0">
+          <div className="bg-gradient-to-br from-emerald-600 to-teal-700 text-white p-4 sm:p-6 text-center relative overflow-hidden shrink-0">
             <button
               type="button"
               onClick={onClose}
-              className="absolute right-3.5 top-3.5 w-8 h-8 rounded-full bg-black/20 hover:bg-black/30 text-white flex items-center justify-center transition-colors cursor-pointer"
+              className="absolute right-3.5 top-3.5 w-9 h-9 rounded-full bg-black/20 hover:bg-black/30 text-white flex items-center justify-center transition-colors cursor-pointer"
               title="Cerrar"
             >
-              <span className="material-symbols-outlined text-[18px]">close</span>
+              <span className="material-symbols-outlined text-[20px]">close</span>
             </button>
 
             <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-md mx-auto flex items-center justify-center mb-2 shadow-inner">
@@ -114,7 +114,7 @@ export const BookingConfirmationModal: React.FC<BookingConfirmationModalProps> =
           </div>
 
           {/* Cuerpo: Comprobante visual idéntico al mensaje */}
-          <div className="p-4 sm:p-5 flex-1 overflow-y-auto flex flex-col gap-4 text-xs">
+          <div className="p-4 sm:p-5 flex-1 overflow-y-auto flex flex-col gap-3.5 sm:gap-4 text-xs">
             <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 flex flex-col gap-2.5 leading-relaxed text-slate-800">
               <div className="font-extrabold text-slate-900 text-sm">
                 Reserva confirmada {sportEmoji}
@@ -155,15 +155,15 @@ export const BookingConfirmationModal: React.FC<BookingConfirmationModalProps> =
             </div>
 
             {/* Acciones del usuario público (Requisito #1: sin opciones de cancelación) */}
-            <div className="flex flex-col gap-2 pt-1 mt-auto">
+            <div className="flex flex-col gap-2.5 pt-1 mt-auto pb-4 sm:pb-0">
               {/* Enlace directo a WhatsApp */}
               <a
                 href={shareUrl}
                 target="_blank"
                 rel="noreferrer"
-                className="w-full py-3 px-4 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs sm:text-sm transition-all shadow-md flex items-center justify-center gap-2 text-center"
+                className="w-full min-h-[48px] py-3.5 px-4 rounded-full bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-extrabold text-xs sm:text-sm transition-all shadow-md flex items-center justify-center gap-2 text-center"
               >
-                <span className="material-symbols-outlined text-[18px]">chat</span>
+                <span className="material-symbols-outlined text-[20px]">chat</span>
                 <span>Compartir confirmación por WhatsApp</span>
               </a>
 
@@ -171,7 +171,7 @@ export const BookingConfirmationModal: React.FC<BookingConfirmationModalProps> =
               <button
                 type="button"
                 onClick={handleCopy}
-                className="w-full py-2.5 px-4 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition-colors cursor-pointer flex items-center justify-center gap-1.5"
+                className="w-full min-h-[44px] py-2.5 px-4 rounded-full bg-slate-100 hover:bg-slate-200 active:bg-slate-300 text-slate-700 font-bold text-xs transition-colors cursor-pointer flex items-center justify-center gap-1.5"
               >
                 <span className="material-symbols-outlined text-[16px]">
                   {copied ? 'check' : 'content_copy'}
@@ -183,7 +183,7 @@ export const BookingConfirmationModal: React.FC<BookingConfirmationModalProps> =
               <button
                 type="button"
                 onClick={onClose}
-                className="w-full py-2.5 px-4 rounded-full bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-semibold text-xs transition-colors cursor-pointer text-center"
+                className="w-full min-h-[44px] py-2.5 px-4 rounded-full bg-white border border-slate-200 hover:bg-slate-50 active:bg-slate-100 text-slate-700 font-semibold text-xs transition-colors cursor-pointer text-center"
               >
                 Realizar otra reserva
               </button>

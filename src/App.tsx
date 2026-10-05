@@ -162,14 +162,14 @@ function PortalApp() {
       />
 
       {/* Contenedor principal del portal */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 py-4 sm:py-6">
+      <main className="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 py-3 sm:py-6">
         {/* Banner público neutral (Requisito #16: sin prometer tiempo real) */}
-        <div className="mb-4 bg-gradient-to-r from-[#0D5FAE] to-[#1E3A8A] text-white rounded-3xl p-5 sm:p-7 shadow-xs relative overflow-hidden">
+        <div className="mb-3 sm:mb-4 bg-gradient-to-r from-[#0D5FAE] to-[#1E3A8A] text-white rounded-2xl sm:rounded-3xl p-4 sm:p-7 shadow-xs relative overflow-hidden">
           <div className="relative z-10 max-w-2xl">
-            <span className="text-[11px] font-extrabold uppercase tracking-widest text-blue-200">
+            <span className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-widest text-blue-200">
               {club.name}
             </span>
-            <h1 className="text-xl sm:text-2xl font-black tracking-tight mt-1">
+            <h1 className="text-lg sm:text-2xl font-black tracking-tight mt-0.5 sm:mt-1">
               Portal de Reservas de Canchas
             </h1>
             <p className="text-xs sm:text-sm text-blue-100 mt-1 leading-relaxed">
@@ -189,12 +189,12 @@ function PortalApp() {
       </main>
 
       {/* Pie de página público */}
-      <footer className="bg-white border-t border-slate-200/80 py-6 px-4 text-center text-xs text-slate-400">
-        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
-          <div className="flex items-center gap-2">
+      <footer className="bg-white border-t border-slate-200/80 py-4 sm:py-6 px-3 sm:px-4 text-center text-xs text-slate-400">
+        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2.5 sm:gap-3">
+          <div className="flex items-center gap-1.5 text-center text-[11px] sm:text-xs">
             <span className="font-extrabold text-slate-800">{club.name}</span>
             <span>·</span>
-            <span>{club.address}</span>
+            <span className="truncate">{club.address}</span>
           </div>
 
           <div className="flex items-center gap-4 text-[11px] text-slate-500 font-medium">

@@ -107,17 +107,17 @@ export const DatePickerModal: React.FC<DatePickerModalProps> = ({
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-xs">
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-slate-900/60 backdrop-blur-xs overflow-y-auto">
           <motion.div
-            initial={{ opacity: 0, scale: 0.95, y: 12 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: 12 }}
-            transition={{ duration: 0.16 }}
-            className="w-full max-w-sm bg-white rounded-3xl shadow-2xl border border-slate-200 overflow-hidden"
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 30 }}
+            transition={{ type: 'spring', damping: 28, stiffness: 320 }}
+            className="w-full sm:max-w-sm bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl border border-slate-200 overflow-hidden my-0 sm:my-auto"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Modal Header */}
-            <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/80">
+            <div className="px-4 sm:px-5 py-3.5 sm:py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/80">
               <div className="flex items-center gap-2">
                 <span className="material-symbols-outlined text-[#0D5FAE] text-[20px]">
                   calendar_month
@@ -129,28 +129,28 @@ export const DatePickerModal: React.FC<DatePickerModalProps> = ({
               <button
                 type="button"
                 onClick={onClose}
-                className="w-8 h-8 rounded-full bg-slate-200/80 hover:bg-slate-200 text-slate-600 flex items-center justify-center transition-colors cursor-pointer"
+                className="w-9 h-9 rounded-full bg-slate-200/80 hover:bg-slate-200 text-slate-600 flex items-center justify-center transition-colors cursor-pointer"
                 title="Cerrar"
               >
-                <span className="material-symbols-outlined text-[16px]">close</span>
+                <span className="material-symbols-outlined text-[18px]">close</span>
               </button>
             </div>
 
             {/* Quick shortcuts (all guaranteed >= minDate) */}
-            <div className="p-3 bg-slate-50 border-b border-slate-100 flex items-center justify-center gap-2 flex-wrap">
+            <div className="p-2.5 sm:p-3 bg-slate-50 border-b border-slate-100 grid grid-cols-2 xs:grid-cols-4 gap-1.5 sm:gap-2">
               <button
                 type="button"
                 onClick={() => {
                   onSelectDate(day0Str);
                   onClose();
                 }}
-                className={`px-3 py-1 rounded-full text-xs font-bold transition-all cursor-pointer ${
+                className={`h-9 px-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center text-center ${
                   selectedDate === day0Str
                     ? 'bg-[#0D5FAE] text-white shadow-xs'
                     : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-100'
                 }`}
               >
-                Hoy ({formatDateShort(day0Str)})
+                Hoy
               </button>
               <button
                 type="button"
@@ -158,13 +158,13 @@ export const DatePickerModal: React.FC<DatePickerModalProps> = ({
                   onSelectDate(day1Str);
                   onClose();
                 }}
-                className={`px-3 py-1 rounded-full text-xs font-bold transition-all cursor-pointer ${
+                className={`h-9 px-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center text-center ${
                   selectedDate === day1Str
                     ? 'bg-[#0D5FAE] text-white shadow-xs'
                     : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-100'
                 }`}
               >
-                Mañana ({formatDateShort(day1Str)})
+                Mañana
               </button>
               <button
                 type="button"
@@ -172,7 +172,7 @@ export const DatePickerModal: React.FC<DatePickerModalProps> = ({
                   onSelectDate(day2Str);
                   onClose();
                 }}
-                className={`px-3 py-1 rounded-full text-xs font-bold transition-all cursor-pointer ${
+                className={`h-9 px-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center text-center ${
                   selectedDate === day2Str
                     ? 'bg-[#0D5FAE] text-white shadow-xs'
                     : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-100'
@@ -186,7 +186,7 @@ export const DatePickerModal: React.FC<DatePickerModalProps> = ({
                   onSelectDate(day3Str);
                   onClose();
                 }}
-                className={`px-3 py-1 rounded-full text-xs font-bold transition-all cursor-pointer ${
+                className={`h-9 px-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center text-center ${
                   selectedDate === day3Str
                     ? 'bg-[#0D5FAE] text-white shadow-xs'
                     : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-100'
@@ -197,8 +197,8 @@ export const DatePickerModal: React.FC<DatePickerModalProps> = ({
             </div>
 
             {/* Calendar Controls (Month & Year) */}
-            <div className="p-4 sm:p-5">
-              <div className="flex items-center justify-between mb-4">
+            <div className="p-3.5 sm:p-5 pb-5">
+              <div className="flex items-center justify-between mb-3 sm:mb-4">
                 <span className="font-extrabold text-sm text-slate-800 tracking-tight">
                   {monthNames[viewMonth]} {viewYear}
                 </span>
@@ -224,7 +224,7 @@ export const DatePickerModal: React.FC<DatePickerModalProps> = ({
               </div>
 
               {/* Day names headers */}
-              <div className="grid grid-cols-7 gap-1 text-center mb-2">
+              <div className="grid grid-cols-7 gap-1 text-center mb-1.5">
                 {weekDayNames.map((wName, i) => (
                   <span
                     key={i}
@@ -254,7 +254,7 @@ export const DatePickerModal: React.FC<DatePickerModalProps> = ({
                     return (
                       <div
                         key={dayNum}
-                        className="h-9 sm:h-10 rounded-2xl text-xs sm:text-sm font-semibold flex items-center justify-center text-slate-300 cursor-not-allowed select-none"
+                        className="h-9 sm:h-10 rounded-xl text-xs sm:text-sm font-semibold flex items-center justify-center text-slate-300 cursor-not-allowed select-none"
                         title="Fecha pasada (no disponible para reservas)"
                       >
                         {dayNum}
@@ -267,12 +267,12 @@ export const DatePickerModal: React.FC<DatePickerModalProps> = ({
                       key={dayNum}
                       type="button"
                       onClick={() => handlePickDay(dayNum)}
-                      className={`h-9 sm:h-10 rounded-2xl text-xs sm:text-sm font-bold transition-all cursor-pointer flex flex-col items-center justify-center relative ${
+                      className={`h-9 sm:h-10 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer flex flex-col items-center justify-center relative ${
                         isSelected
                           ? 'bg-[#0D5FAE] text-white shadow-md shadow-blue-500/20 font-black'
                           : isToday
                           ? 'bg-blue-50 text-[#0D5FAE] border border-blue-200 hover:bg-blue-100'
-                          : 'text-slate-700 hover:bg-slate-100 hover:text-slate-900'
+                          : 'text-slate-700 hover:bg-slate-100 hover:text-slate-900 active:bg-slate-200'
                       }`}
                     >
                       <span>{dayNum}</span>
@@ -285,7 +285,7 @@ export const DatePickerModal: React.FC<DatePickerModalProps> = ({
               </div>
 
               {/* Direct manual input fallback with min constraint */}
-              <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
+              <div className="mt-3.5 pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
                 <span>O ingresar fecha:</span>
                 <input
                   type="date"

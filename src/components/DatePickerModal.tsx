@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
+import { PORTAL_BASE_TODAY, isPastDate } from '../utils/dateUtils';
 
 interface DatePickerModalProps {
   isOpen: boolean;
   onClose: () => void;
   selectedDate: string; // YYYY-MM-DD
   onSelectDate: (dateStr: string) => void;
+  minDate?: string;
 }
 
 export const DatePickerModal: React.FC<DatePickerModalProps> = ({
@@ -13,6 +15,7 @@ export const DatePickerModal: React.FC<DatePickerModalProps> = ({
   onClose,
   selectedDate,
   onSelectDate,
+  minDate = PORTAL_BASE_TODAY,
 }) => {
   // Parse current selected date safely
   const parseDate = (str: string) => {
@@ -54,7 +57,7 @@ export const DatePickerModal: React.FC<DatePickerModalProps> = ({
 
   // Days in current view month
   const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
-  
+
   // Day of week of 1st day of month (0 = Sun, 1 = Mon ... 6 = Sat)
   const firstDayOfWeek = new Date(viewYear, viewMonth, 1).getDay();
   // Convert so Monday is index 0: Mon=0, Tue=1 ... Sun=6
@@ -80,11 +83,12 @@ export const DatePickerModal: React.FC<DatePickerModalProps> = ({
 
   const handlePickDay = (day: number) => {
     const newDateStr = formatYMD(viewYear, viewMonth, day);
+    if (isPastDate(newDateStr, minDate)) {
+      return; // Do not allow selecting past dates
+    }
     onSelectDate(newDateStr);
     onClose();
   };
-
-  const todayStr = '2024-10-30'; // Anchor today date in mock
 
   return (
     <AnimatePresence>
@@ -117,9 +121,10 @@ export const DatePickerModal: React.FC<DatePickerModalProps> = ({
               </button>
             </div>
 
-            {/* Quick shortcuts */}
-            <div className="p-3 bg-slate-50 border-b border-slate-100 flex items-center justify-center gap-2">
+            {/* Quick shortcuts (all guaranteed >= minDate) */}
+            <div className="p-3 bg-slate-50 border-b border-slate-100 flex items-center justify-center gap-2 flex-wrap">
               <button
+                type="button"
                 onClick={() => {
                   onSelectDate('2024-10-30');
                   onClose();
@@ -133,6 +138,7 @@ export const DatePickerModal: React.FC<DatePickerModalProps> = ({
                 Hoy (Mié 30)
               </button>
               <button
+                type="button"
                 onClick={() => {
                   onSelectDate('2024-10-31');
                   onClose();
@@ -146,6 +152,7 @@ export const DatePickerModal: React.FC<DatePickerModalProps> = ({
                 Mañana (Jue 31)
               </button>
               <button
+                type="button"
                 onClick={() => {
                   onSelectDate('2024-11-01');
                   onClose();
@@ -158,6 +165,20 @@ export const DatePickerModal: React.FC<DatePickerModalProps> = ({
               >
                 Vie 1 Nov
               </button>
+              <button
+                type="button"
+                onClick={() => {
+                  onSelectDate('2024-11-02');
+                  onClose();
+                }}
+                className={`px-3 py-1 rounded-full text-xs font-bold transition-all cursor-pointer ${
+                  selectedDate === '2024-11-02'
+                    ? 'bg-[#0D5FAE] text-white shadow-xs'
+                    : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-100'
+                }`}
+              >
+                Sáb 2 Nov
+              </button>
             </div>
 
             {/* Calendar Controls (Month & Year) */}
@@ -169,6 +190,7 @@ export const DatePickerModal: React.FC<DatePickerModalProps> = ({
 
                 <div className="flex items-center gap-1">
                   <button
+                    type="button"
                     onClick={handlePrevMonth}
                     className="w-8 h-8 rounded-full hover:bg-slate-100 text-slate-600 flex items-center justify-center transition-colors cursor-pointer"
                     title="Mes anterior"
@@ -176,6 +198,7 @@ export const DatePickerModal: React.FC<DatePickerModalProps> = ({
                     <span className="material-symbols-outlined text-[18px]">chevron_left</span>
                   </button>
                   <button
+                    type="button"
                     onClick={handleNextMonth}
                     className="w-8 h-8 rounded-full hover:bg-slate-100 text-slate-600 flex items-center justify-center transition-colors cursor-pointer"
                     title="Mes siguiente"
@@ -208,12 +231,26 @@ export const DatePickerModal: React.FC<DatePickerModalProps> = ({
                 {Array.from({ length: daysInMonth }).map((_, i) => {
                   const dayNum = i + 1;
                   const dateStr = formatYMD(viewYear, viewMonth, dayNum);
+                  const isPast = isPastDate(dateStr, minDate);
                   const isSelected = selectedDate === dateStr;
-                  const isToday = dateStr === todayStr;
+                  const isToday = dateStr === minDate;
+
+                  if (isPast) {
+                    return (
+                      <div
+                        key={dayNum}
+                        className="h-9 sm:h-10 rounded-2xl text-xs sm:text-sm font-semibold flex items-center justify-center text-slate-300 cursor-not-allowed select-none"
+                        title="Fecha pasada (no disponible para reservas)"
+                      >
+                        {dayNum}
+                      </div>
+                    );
+                  }
 
                   return (
                     <button
                       key={dayNum}
+                      type="button"
                       onClick={() => handlePickDay(dayNum)}
                       className={`h-9 sm:h-10 rounded-2xl text-xs sm:text-sm font-bold transition-all cursor-pointer flex flex-col items-center justify-center relative ${
                         isSelected
@@ -232,16 +269,19 @@ export const DatePickerModal: React.FC<DatePickerModalProps> = ({
                 })}
               </div>
 
-              {/* Direct native date picker input fallback */}
+              {/* Direct manual input fallback with min constraint */}
               <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
-                <span>O escribir manualmente:</span>
+                <span>O ingresar fecha:</span>
                 <input
                   type="date"
+                  min={minDate}
                   value={selectedDate}
                   onChange={(e) => {
                     if (e.target.value) {
-                      onSelectDate(e.target.value);
-                      onClose();
+                      if (!isPastDate(e.target.value, minDate)) {
+                        onSelectDate(e.target.value);
+                        onClose();
+                      }
                     }
                   }}
                   className="px-2 py-1 bg-slate-100 border border-slate-200 rounded-lg text-xs font-medium text-slate-800 focus:outline-none focus:border-[#0D5FAE]"

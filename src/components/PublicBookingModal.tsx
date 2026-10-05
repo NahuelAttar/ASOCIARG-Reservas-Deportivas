@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Court, CustomerData, calculateEndTime, getSportDurationMinutes, ClubInfo } from '../types';
+import { Court, CustomerData, calculateEndTime, ClubInfo } from '../types';
+import { formatDateReadable, formatSlotInterval } from '../utils/dateUtils';
 
 interface PublicBookingModalProps {
   isOpen: boolean;
@@ -15,7 +16,7 @@ interface PublicBookingModalProps {
     endTime: string;
     date: string;
     customer: CustomerData;
-  }) => void;
+  }) => Promise<{ success: boolean; error?: string }>;
 }
 
 export const PublicBookingModal: React.FC<PublicBookingModalProps> = ({
@@ -27,66 +28,86 @@ export const PublicBookingModal: React.FC<PublicBookingModalProps> = ({
   date,
   onConfirmReservation,
 }) => {
+  const [step, setStep] = useState<'form' | 'review'>('form');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [phone, setPhone] = useState('');
-  const [notes, setNotes] = useState('');
+  const [formError, setFormError] = useState<string | null>(null);
+  const [confirmError, setConfirmError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Reset inputs when opening
+  // Reset or initialize state on open
   useEffect(() => {
     if (isOpen) {
-      setFirstName('');
-      setLastName('');
-      setPhone('');
-      setNotes('');
+      setStep('form');
+      setFormError(null);
+      setConfirmError(null);
+      setIsSubmitting(false);
     }
-  }, [isOpen]);
+  }, [isOpen, court, startTime, date]);
 
   if (!court) return null;
 
   const endTime = calculateEndTime(startTime, court.sport);
-  const durationMinutes = getSportDurationMinutes(court.sport);
-  const durationText = durationMinutes === 90 ? '1 hora y media' : '1 hora';
+  const slotIntervalText = formatSlotInterval(startTime, court.sport);
+  const formattedDate = formatDateReadable(date);
 
-  // Format date readable (e.g., "Miércoles 30 de Octubre")
-  const formatDateReadable = (dateStr: string) => {
-    try {
-      const d = new Date(dateStr + 'T12:00:00');
-      return d.toLocaleDateString('es-AR', {
-        weekday: 'long',
-        day: 'numeric',
-        month: 'long',
-      });
-    } catch {
-      return dateStr;
+  // Handle step 1: Validate and go to review
+  const handleProceedToReview = (e: React.FormEvent) => {
+    e.preventDefault();
+    setFormError(null);
+
+    const trimmedFirst = firstName.trim();
+    const trimmedLast = lastName.trim();
+    const trimmedPhone = phone.trim();
+
+    if (!trimmedFirst) {
+      setFormError('Por favor ingresá tu nombre.');
+      return;
     }
+
+    if (!trimmedLast) {
+      setFormError('Por favor ingresá tu apellido.');
+      return;
+    }
+
+    if (!trimmedPhone || trimmedPhone.length < 6) {
+      setFormError('Por favor ingresá un número de teléfono válido para la reserva.');
+      return;
+    }
+
+    setStep('review');
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  // Handle step 2: Final confirmation with anti-collision validation
+  const handleFinalConfirm = async () => {
+    setConfirmError(null);
+    setIsSubmitting(true);
 
-    if (!firstName.trim() || !lastName.trim()) {
-      alert('Por favor ingresá tu Nombre y Apellido para la reserva.');
-      return;
+    try {
+      const result = await onConfirmReservation({
+        court,
+        startTime,
+        endTime,
+        date,
+        customer: {
+          firstName: firstName.trim(),
+          lastName: lastName.trim(),
+          phone: phone.trim(),
+        },
+      });
+
+      if (!result.success) {
+        setConfirmError(
+          result.error ||
+            'No pudimos confirmar la reserva. Verificá el horario e intentá nuevamente.'
+        );
+      }
+    } catch {
+      setConfirmError('No pudimos confirmar la reserva. Verificá el horario e intentá nuevamente.');
+    } finally {
+      setIsSubmitting(false);
     }
-
-    if (!phone.trim()) {
-      alert('Por favor ingresá tu Teléfono de contacto (WhatsApp) para confirmar el turno.');
-      return;
-    }
-
-    onConfirmReservation({
-      court,
-      startTime,
-      endTime,
-      date,
-      customer: {
-        firstName: firstName.trim(),
-        lastName: lastName.trim(),
-        phone: phone.trim(),
-        notes: notes.trim() || undefined,
-      },
-    });
   };
 
   return (
@@ -98,183 +119,247 @@ export const PublicBookingModal: React.FC<PublicBookingModalProps> = ({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.18 }}
+            transition={{ duration: 0.16 }}
             onClick={onClose}
-            className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs"
+            className="fixed inset-0 bg-slate-900/50 backdrop-blur-xs cursor-pointer"
           />
 
-          {/* Modal Card */}
+          {/* Modal Container */}
           <motion.div
             initial={{ opacity: 0, scale: 0.95, y: 15 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 15 }}
-            transition={{ type: 'spring', damping: 26, stiffness: 300 }}
-            className="relative w-full max-w-lg max-h-[92vh] flex flex-col bg-white rounded-3xl shadow-2xl overflow-hidden border border-slate-200/90 z-10"
+            transition={{ type: 'spring', damping: 26, stiffness: 320 }}
+            className="relative w-full max-w-md max-h-[92vh] flex flex-col bg-white rounded-3xl shadow-2xl overflow-hidden border border-slate-200 z-10"
           >
-            {/* Header */}
-            <div className="px-5 py-4 bg-slate-50 border-b border-slate-100 flex items-start justify-between shrink-0">
+            {/* Header with Steps Breadcrumb */}
+            <div className="px-5 py-4 bg-slate-50 border-b border-slate-100 flex items-center justify-between shrink-0">
               <div>
-                <div className="flex items-center gap-1.5 text-[11px] font-extrabold uppercase tracking-wider text-[#0D5FAE]">
-                  <span>{court.sportLabel}</span>
-                  <span>·</span>
-                  <span>{court.name}</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#0D5FAE] bg-blue-50 px-2 py-0.5 rounded-full">
+                    {court.sportLabel}
+                  </span>
+                  <span className="text-xs text-slate-400 font-medium">·</span>
+                  <span className="text-xs font-bold text-slate-700">{court.name}</span>
                 </div>
-                <h2 className="text-lg font-extrabold text-slate-900 mt-0.5 tracking-tight">
-                  Completar Reserva de Cancha
+                <h2 className="text-base sm:text-lg font-extrabold text-slate-900 mt-1 tracking-tight">
+                  {step === 'form' ? 'Tus Datos de Reserva' : 'Revisión de la Reserva'}
                 </h2>
-                <div className="text-xs font-semibold text-slate-500 mt-0.5 capitalize">
-                  {formatDateReadable(date)}
-                </div>
               </div>
 
-              <motion.button
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
+              <button
                 type="button"
                 onClick={onClose}
-                className="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-200/60 transition-colors cursor-pointer"
-                aria-label="Cerrar"
+                className="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-200 transition-colors cursor-pointer"
+                title="Cerrar"
+                aria-label="Cerrar modal"
               >
                 <span className="material-symbols-outlined text-[18px]">close</span>
-              </motion.button>
+              </button>
             </div>
 
-            {/* Form */}
-            <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-5 flex flex-col gap-4 text-xs">
-              {/* Summary Card (Read-only Turn Details) */}
-              <div className="p-4 bg-blue-50/60 rounded-2xl border border-blue-100/90 flex flex-col gap-2.5">
-                <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-[#0D5FAE]">
-                    Detalles del Turno
-                  </span>
-                  <span className="text-[11px] font-semibold text-slate-600 bg-white px-2 py-0.5 rounded-full border border-blue-100">
-                    Duración: {durationText}
-                  </span>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3 pt-1">
-                  <div>
-                    <span className="text-[10px] text-slate-400 font-medium block">Horario</span>
-                    <span className="text-base font-extrabold text-slate-900 tabular-nums">
-                      {startTime} a {endTime} hs
+            {/* STEP 1: FORM INPUTS */}
+            {step === 'form' && (
+              <form onSubmit={handleProceedToReview} className="flex-1 overflow-y-auto p-5 flex flex-col gap-4 text-xs">
+                {/* Selected Slot Recap */}
+                <div className="p-3.5 bg-blue-50/70 rounded-2xl border border-blue-100 flex items-center justify-between">
+                  <div className="flex flex-col gap-0.5">
+                    <span className="text-[11px] font-semibold text-slate-500 capitalize">
+                      {formattedDate}
+                    </span>
+                    <span className="text-sm sm:text-base font-extrabold text-slate-900 tabular-nums">
+                      {slotIntervalText}
                     </span>
                   </div>
-
                   <div className="text-right">
-                    <span className="text-[10px] text-slate-400 font-medium block">Tarifa fijada</span>
-                    <span className="text-base font-black text-slate-900 tabular-nums">
+                    <span className="text-[10px] text-slate-400 block font-medium">Total por turno</span>
+                    <span className="text-sm sm:text-base font-black text-slate-900 tabular-nums">
                       ${court.price.toLocaleString('es-AR')}
                     </span>
                   </div>
                 </div>
 
-                <div className="text-[11px] text-slate-500 pt-1 border-t border-blue-100/60 flex items-center gap-1.5">
-                  <span className="material-symbols-outlined text-[14px] text-slate-400">stadium</span>
-                  <span>{court.name}</span>
-                  {court.surface && <span>· {court.surface}</span>}
-                </div>
-              </div>
+                {/* Form Error Banner */}
+                {formError && (
+                  <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 flex items-center gap-2">
+                    <span className="material-symbols-outlined text-[16px] shrink-0">error</span>
+                    <span className="font-semibold text-xs">{formError}</span>
+                  </div>
+                )}
 
-              {/* Customer Inputs */}
-              <div className="flex flex-col gap-3">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-700">
-                  Tus Datos de Contacto
-                </span>
+                {/* Inputs */}
+                <div className="flex flex-col gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="flex flex-col gap-1">
+                      <label htmlFor="booking-first-name" className="text-[11px] font-bold text-slate-700">
+                        Nombre *
+                      </label>
+                      <input
+                        id="booking-first-name"
+                        type="text"
+                        required
+                        autoFocus
+                        value={firstName}
+                        onChange={(e) => setFirstName(e.target.value)}
+                        placeholder="Ej: Nahuel"
+                        className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-900 placeholder-slate-400 focus:outline-none focus:border-[#0D5FAE] focus:bg-white"
+                      />
+                    </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div className="flex flex-col gap-1">
-                    <label className="text-[11px] font-semibold text-slate-700">
-                      Nombre *
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      autoFocus
-                      value={firstName}
-                      onChange={(e) => setFirstName(e.target.value)}
-                      placeholder="Ej: Marcelo"
-                      className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-900 placeholder-slate-400 focus:outline-none focus:border-[#0D5FAE] focus:bg-white"
-                    />
+                    <div className="flex flex-col gap-1">
+                      <label htmlFor="booking-last-name" className="text-[11px] font-bold text-slate-700">
+                        Apellido *
+                      </label>
+                      <input
+                        id="booking-last-name"
+                        type="text"
+                        required
+                        value={lastName}
+                        onChange={(e) => setLastName(e.target.value)}
+                        placeholder="Ej: Attar"
+                        className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-900 placeholder-slate-400 focus:outline-none focus:border-[#0D5FAE] focus:bg-white"
+                      />
+                    </div>
                   </div>
 
                   <div className="flex flex-col gap-1">
-                    <label className="text-[11px] font-semibold text-slate-700">
-                      Apellido *
+                    <label htmlFor="booking-phone" className="text-[11px] font-bold text-slate-700">
+                      Teléfono celular (WhatsApp) *
                     </label>
                     <input
-                      type="text"
+                      id="booking-phone"
+                      type="tel"
                       required
-                      value={lastName}
-                      onChange={(e) => setLastName(e.target.value)}
-                      placeholder="Ej: Rossi"
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      placeholder="Ej: 3564-445566"
                       className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-900 placeholder-slate-400 focus:outline-none focus:border-[#0D5FAE] focus:bg-white"
                     />
+                    <span className="text-[10px] text-slate-400">
+                      Para compartirte la confirmación y avisos del complejo.
+                    </span>
                   </div>
                 </div>
 
-                <div className="flex flex-col gap-1">
-                  <label className="text-[11px] font-semibold text-slate-700">
-                    Teléfono celular (WhatsApp) *
-                  </label>
-                  <input
-                    type="tel"
-                    required
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    placeholder="Ej: 3564-445566"
-                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-900 placeholder-slate-400 focus:outline-none focus:border-[#0D5FAE] focus:bg-white"
-                  />
-                  <span className="text-[10px] text-slate-400 mt-0.5">
-                    El club utilizará este número para enviarte recordatorios o avisos del turno.
+                {/* Direct buttons */}
+                <div className="pt-2 flex items-center gap-3 mt-auto">
+                  <button
+                    type="button"
+                    onClick={onClose}
+                    className="py-3 px-5 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition-colors cursor-pointer"
+                  >
+                    Cancelar
+                  </button>
+
+                  <button
+                    type="submit"
+                    className="flex-1 py-3 px-6 rounded-full bg-[#0D5FAE] hover:bg-[#094785] text-white font-extrabold text-xs sm:text-sm transition-all shadow-md cursor-pointer flex items-center justify-center gap-2"
+                  >
+                    <span>Continuar a Revisión</span>
+                    <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
+                  </button>
+                </div>
+              </form>
+            )}
+
+            {/* STEP 2: REVIEW BEFORE CONFIRMATION (REQUISITO #7) */}
+            {step === 'review' && (
+              <div className="flex-1 overflow-y-auto p-5 flex flex-col gap-4 text-xs">
+                {/* Collision / Error Alert */}
+                {confirmError && (
+                  <div className="p-3.5 rounded-2xl bg-amber-50 border border-amber-300 text-amber-900 flex items-start gap-2.5">
+                    <span className="material-symbols-outlined text-[20px] text-amber-600 shrink-0 mt-0.5">
+                      warning
+                    </span>
+                    <div className="flex flex-col gap-1">
+                      <span className="font-extrabold text-xs">Atención</span>
+                      <p className="text-xs leading-relaxed text-amber-800">{confirmError}</p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Review Card matching user's requested specification */}
+                <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 flex flex-col gap-3">
+                  <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">
+                    Resumen de la Reserva
                   </span>
+
+                  <div className="flex flex-col gap-1.5 pb-2.5 border-b border-slate-200/80">
+                    <div className="text-base font-extrabold text-slate-900">
+                      {court.sportLabel} - {court.name}
+                    </div>
+                    <div className="text-xs font-semibold text-slate-600 capitalize">
+                      {formattedDate}
+                    </div>
+                    <div className="text-sm font-black text-[#0D5FAE] tabular-nums">
+                      {slotIntervalText}
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col gap-1 pb-2.5 border-b border-slate-200/80 text-xs">
+                    <span className="text-slate-500 font-medium">A nombre de:</span>
+                    <span className="text-sm font-extrabold text-slate-900">
+                      {firstName} {lastName}
+                    </span>
+                    <span className="text-slate-600 font-medium flex items-center gap-1 mt-0.5">
+                      <span className="material-symbols-outlined text-[14px] text-slate-400">call</span>
+                      <span>{phone}</span>
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-between pt-1">
+                    <span className="font-bold text-slate-700 text-xs sm:text-sm">Total a abonar:</span>
+                    <span className="text-lg sm:text-xl font-black text-slate-900 tabular-nums">
+                      ${court.price.toLocaleString('es-AR')}
+                    </span>
+                  </div>
                 </div>
 
-                <div className="flex flex-col gap-1">
-                  <label className="text-[11px] font-semibold text-slate-700">
-                    Comentarios o notas (opcional)
-                  </label>
-                  <textarea
-                    rows={2}
-                    value={notes}
-                    onChange={(e) => setNotes(e.target.value)}
-                    placeholder="Ej: Llevamos paletas propias / Llegamos 10 minutos antes..."
-                    className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-[#0D5FAE] focus:bg-white resize-none"
-                  />
+                {/* Info Note */}
+                <p className="text-[11px] text-slate-500 leading-relaxed px-1">
+                  El turno se abona en la recepción de <strong>{club.name}</strong> al momento de asistir.
+                </p>
+
+                {/* Actions */}
+                <div className="pt-2 flex items-center gap-3 mt-auto">
+                  <button
+                    type="button"
+                    disabled={isSubmitting}
+                    onClick={() => {
+                      setConfirmError(null);
+                      setStep('form');
+                    }}
+                    className="py-3 px-4 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition-colors cursor-pointer flex items-center gap-1"
+                  >
+                    <span className="material-symbols-outlined text-[16px]">arrow_back</span>
+                    <span>Modificar</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    disabled={isSubmitting}
+                    onClick={handleFinalConfirm}
+                    className={`flex-1 py-3 px-6 rounded-full font-extrabold text-xs sm:text-sm transition-all shadow-md flex items-center justify-center gap-2 ${
+                      isSubmitting
+                        ? 'bg-slate-400 text-white cursor-not-allowed'
+                        : 'bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer'
+                    }`}
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <span className="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        <span>Confirmando...</span>
+                      </>
+                    ) : (
+                      <>
+                        <span className="material-symbols-outlined text-[18px]">check_circle</span>
+                        <span>Confirmar reserva</span>
+                      </>
+                    )}
+                  </button>
                 </div>
               </div>
-
-              {/* Informative Note */}
-              <div className="p-3 bg-slate-50 rounded-xl border border-slate-200/70 text-[11px] text-slate-500 flex items-start gap-2">
-                <span className="material-symbols-outlined text-[16px] text-emerald-600 shrink-0 mt-0.5">
-                  verified
-                </span>
-                <span>
-                  Al presionar <strong>Confirmar Reserva</strong>, el turno quedará bloqueado y registrado a tu nombre en {club.name}. El pago del turno se abona en la recepción del club.
-                </span>
-              </div>
-
-              {/* Submit Buttons */}
-              <div className="pt-2 flex items-center gap-3">
-                <button
-                  type="button"
-                  onClick={onClose}
-                  className="py-3 px-5 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs transition-colors cursor-pointer"
-                >
-                  Cancelar
-                </button>
-
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.97 }}
-                  type="submit"
-                  className="flex-1 py-3 px-6 rounded-full bg-[#0D5FAE] hover:bg-[#094785] text-white font-extrabold text-sm transition-all shadow-md cursor-pointer flex items-center justify-center gap-2"
-                >
-                  <span>Confirmar Reserva</span>
-                  <span>·</span>
-                  <span className="tabular-nums">${court.price.toLocaleString('es-AR')}</span>
-                </motion.button>
-              </div>
-            </form>
+            )}
           </motion.div>
         </div>
       )}

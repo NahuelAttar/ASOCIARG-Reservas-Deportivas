@@ -11,16 +11,17 @@ import {
   INITIAL_PUBLIC_RESERVATIONS,
 } from './data/mockData';
 import { Court, CustomerData, PublicReservation } from './types';
+import { PORTAL_BASE_TODAY } from './utils/dateUtils';
 
 export default function App() {
   const [club] = useState(MOCK_CLUB);
-  const [currentDate, setCurrentDate] = useState<string>('2024-10-30');
+  const [currentDate, setCurrentDate] = useState<string>(PORTAL_BASE_TODAY);
   const [courts] = useState<Court[]>(INITIAL_COURTS);
   const [reservations, setReservations] = useState<PublicReservation[]>(
     INITIAL_PUBLIC_RESERVATIONS
   );
 
-  // Modal for filling customer booking data
+  // Modal for filling customer booking data & review
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
   const [selectedCourt, setSelectedCourt] = useState<Court | null>(null);
   const [selectedTime, setSelectedTime] = useState<string>('19:00');
@@ -45,14 +46,31 @@ export default function App() {
     setIsBookingModalOpen(true);
   };
 
-  // Confirm booking
-  const handleConfirmReservation = (data: {
+  // Confirm booking with anti-collision / double booking validation (Requisitos #11 & #12)
+  const handleConfirmReservation = async (data: {
     court: Court;
     startTime: string;
     endTime: string;
     date: string;
     customer: CustomerData;
-  }) => {
+  }): Promise<{ success: boolean; error?: string }> => {
+    // Check if the slot became occupied in the meantime
+    const isAlreadyTaken = reservations.some(
+      (r) =>
+        r.courtId === data.court.id &&
+        r.date === data.date &&
+        (r.startTime === data.startTime ||
+          (data.startTime >= r.startTime && data.startTime < r.endTime))
+    );
+
+    if (isAlreadyTaken) {
+      return {
+        success: false,
+        error:
+          'No pudimos confirmar la reserva. El horario seleccionado ya no se encuentra disponible. Por favor, elegí otro horario.',
+      };
+    }
+
     const randomCode = Math.floor(1000 + Math.random() * 9000);
     const newReservation: PublicReservation = {
       id: `res-${Date.now()}`,
@@ -74,7 +92,17 @@ export default function App() {
     setIsBookingModalOpen(false);
     setConfirmedReservation(newReservation);
     setIsConfirmationOpen(true);
-    showToast(`¡Turno reservado con éxito! Código: ${newReservation.bookingCode}`);
+    showToast('¡Turno confirmado con éxito!');
+
+    return { success: true };
+  };
+
+  // Public cancellation action (Requisito #13: preparado para cancelación pública)
+  const handleCancelReservation = (reservationId: string) => {
+    setReservations((prev) => prev.filter((r) => r.id !== reservationId));
+    setIsConfirmationOpen(false);
+    setConfirmedReservation(null);
+    showToast('Reserva cancelada con éxito. El horario quedó disponible nuevamente.');
   };
 
   const handleCloseConfirmation = () => {
@@ -99,11 +127,11 @@ export default function App() {
             <span className="text-[11px] font-extrabold uppercase tracking-widest text-blue-200">
               {club.name}
             </span>
-            <h2 className="text-xl sm:text-2xl font-black tracking-tight mt-1">
-              Reservá tu cancha online
-            </h2>
+            <h1 className="text-xl sm:text-2xl font-black tracking-tight mt-1">
+              Portal de Reservas de Canchas
+            </h1>
             <p className="text-xs sm:text-sm text-blue-100 mt-1 leading-relaxed">
-              Elegí el deporte, la cancha y el horario que prefieras. Tu turno queda registrado inmediatamente en el club.
+              Consultá disponibilidad de turnos en tiempo real y reservá tu cancha en segundos.
             </p>
           </div>
           {/* Subtle decoration */}
@@ -134,16 +162,16 @@ export default function App() {
               href={`https://api.whatsapp.com/send?phone=${club.whatsapp}`}
               target="_blank"
               rel="noreferrer"
-              className="text-[#0D5FAE] hover:underline flex items-center gap-1"
+              className="text-[#0D5FAE] hover:underline flex items-center gap-1 font-semibold"
             >
-              <span className="material-symbols-outlined text-[13px]">chat</span>
-              <span>Consultas por WhatsApp</span>
+              <span className="material-symbols-outlined text-[14px]">chat</span>
+              <span>WhatsApp Oficial</span>
             </a>
           </div>
         </div>
       </footer>
 
-      {/* Booking Form Modal */}
+      {/* Booking Form Modal with Step 1 (Inputs) and Step 2 (Review) */}
       <PublicBookingModal
         isOpen={isBookingModalOpen}
         onClose={() => setIsBookingModalOpen(false)}
@@ -154,12 +182,13 @@ export default function App() {
         onConfirmReservation={handleConfirmReservation}
       />
 
-      {/* Booking Confirmation Receipt Modal */}
+      {/* Booking Confirmation Receipt Modal with WhatsApp Voucher & Cancel */}
       <BookingConfirmationModal
         isOpen={isConfirmationOpen}
         reservation={confirmedReservation}
         club={club}
         onClose={handleCloseConfirmation}
+        onCancelReservation={handleCancelReservation}
       />
 
       {/* Floating feedback toast */}

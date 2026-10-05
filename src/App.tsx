@@ -10,7 +10,7 @@ import {
   INITIAL_COURTS,
   INITIAL_PUBLIC_RESERVATIONS,
 } from './data/mockData';
-import { Court, CustomerData, PublicReservation } from './types';
+import { Court, CustomerData, PublicReservation, doIntervalsOverlap } from './types';
 import { PORTAL_BASE_TODAY } from './utils/dateUtils';
 
 interface ErrorBoundaryProps {
@@ -21,6 +21,7 @@ interface ErrorBoundaryState {
   hasError: boolean;
 }
 
+// Error Boundary amigable para el portal público (Requisito #18)
 class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
   constructor(props: ErrorBoundaryProps) {
     super(props);
@@ -41,20 +42,20 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
         <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6 text-center">
           <div className="max-w-md bg-white p-8 rounded-3xl border border-slate-200 shadow-md flex flex-col items-center gap-3">
             <span className="material-symbols-outlined text-4xl text-[#0D5FAE]">
-              sports_tennis
+              info
             </span>
-            <h2 className="text-base font-bold text-slate-800">
-              Reiniciar vista del portal
+            <h2 className="text-base sm:text-lg font-bold text-slate-800">
+              Algo salió mal
             </h2>
             <p className="text-xs text-slate-500 leading-relaxed">
-              Ocurrió un inconveniente temporal al cambiar de sección. Podés reiniciar la vista para continuar reservando.
+              No pudimos cargar el portal correctamente. Intentá nuevamente.
             </p>
             <button
               type="button"
               onClick={() => this.setState({ hasError: false })}
               className="mt-2 px-6 py-2.5 rounded-full bg-[#0D5FAE] text-white font-extrabold text-xs cursor-pointer shadow-xs"
             >
-              Volver a cargar
+              Reintentar
             </button>
           </div>
         </div>
@@ -72,17 +73,17 @@ function PortalApp() {
     INITIAL_PUBLIC_RESERVATIONS
   );
 
-  // Modal for filling customer booking data & review
+  // Modal para completar datos del reservante y revisión
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
   const [selectedCourt, setSelectedCourt] = useState<Court | null>(null);
   const [selectedTime, setSelectedTime] = useState<string>('19:00');
 
-  // Modal for displaying booking receipt voucher
+  // Modal para mostrar confirmación
   const [confirmedReservation, setConfirmedReservation] =
     useState<PublicReservation | null>(null);
   const [isConfirmationOpen, setIsConfirmationOpen] = useState(false);
 
-  // Feedback toast
+  // Toast flotante
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   const showToast = (msg: string) => {
@@ -90,14 +91,14 @@ function PortalApp() {
     setTimeout(() => setToastMessage(null), 3500);
   };
 
-  // Open booking modal when a user taps an available slot
+  // Abrir modal de reserva al tocar un turno disponible
   const handleSelectSlot = (court: Court, startTime: string) => {
     setSelectedCourt(court);
     setSelectedTime(startTime);
     setIsBookingModalOpen(true);
   };
 
-  // Confirm booking with anti-collision / double booking validation (Requisitos #11 & #12)
+  // Confirmar reserva con verificación de superposición de intervalos (Requisito #20)
   const handleConfirmReservation = async (data: {
     court: Court;
     startTime: string;
@@ -105,30 +106,28 @@ function PortalApp() {
     date: string;
     customer: CustomerData;
   }): Promise<{ success: boolean; error?: string }> => {
-    // Check if the slot became occupied in the meantime
+    // Comprobar superposición real de intervalos
     const isAlreadyTaken = reservations.some(
       (r) =>
         r.courtId === data.court.id &&
         r.date === data.date &&
-        (r.startTime === data.startTime ||
-          (data.startTime >= r.startTime && data.startTime < r.endTime))
+        doIntervalsOverlap(data.startTime, data.endTime, r.startTime, r.endTime)
     );
 
     if (isAlreadyTaken) {
       return {
         success: false,
-        error:
-          'No pudimos confirmar la reserva. El horario seleccionado ya no se encuentra disponible. Por favor, elegí otro horario.',
+        error: 'Ese horario ya no está disponible. Elegí otro horario.',
       };
     }
 
-    const randomCode = Math.floor(1000 + Math.random() * 9000);
+    // Reserva confirmada (sin bookingCode visible - Requisito #5)
     const newReservation: PublicReservation = {
       id: `res-${Date.now()}`,
-      bookingCode: `RES-${randomCode}`,
       clubId: club.id,
       courtId: data.court.id,
       courtName: data.court.name,
+      feature: data.court.feature,
       sport: data.court.sport,
       sportLabel: data.court.sportLabel,
       date: data.date,
@@ -148,14 +147,6 @@ function PortalApp() {
     return { success: true };
   };
 
-  // Public cancellation action (Requisito #13: preparado para cancelación pública)
-  const handleCancelReservation = (reservationId: string) => {
-    setReservations((prev) => prev.filter((r) => r.id !== reservationId));
-    setIsConfirmationOpen(false);
-    setConfirmedReservation(null);
-    showToast('Reserva cancelada con éxito. El horario quedó disponible nuevamente.');
-  };
-
   const handleCloseConfirmation = () => {
     setIsConfirmationOpen(false);
     setConfirmedReservation(null);
@@ -163,16 +154,16 @@ function PortalApp() {
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col font-sans selection:bg-[#0D5FAE]/15 selection:text-[#0D5FAE]">
-      {/* Public Header with Club Identity, Link and Date Selector */}
+      {/* Cabecera pública con identidad y selector de fecha */}
       <PublicHeader
         club={club}
         currentDate={currentDate}
         onDateChange={setCurrentDate}
       />
 
-      {/* Main Public Portal Viewport */}
+      {/* Contenedor principal del portal */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 py-4 sm:py-6">
-        {/* Portal Greeting Banner */}
+        {/* Banner público neutral (Requisito #16: sin prometer tiempo real) */}
         <div className="mb-4 bg-gradient-to-r from-[#0D5FAE] to-[#1E3A8A] text-white rounded-3xl p-5 sm:p-7 shadow-xs relative overflow-hidden">
           <div className="relative z-10 max-w-2xl">
             <span className="text-[11px] font-extrabold uppercase tracking-widest text-blue-200">
@@ -182,14 +173,13 @@ function PortalApp() {
               Portal de Reservas de Canchas
             </h1>
             <p className="text-xs sm:text-sm text-blue-100 mt-1 leading-relaxed">
-              Consultá disponibilidad de turnos en tiempo real y reservá tu cancha en segundos.
+              Consultá la disponibilidad y reservá tu cancha.
             </p>
           </div>
-          {/* Subtle decoration */}
           <div className="absolute -right-6 -bottom-8 w-40 h-40 bg-white/5 rounded-full pointer-events-none" />
         </div>
 
-        {/* Public Booking View: Sport tabs, Court cards, and available time slots */}
+        {/* Vista pública de reservas: Pestañas de deporte, canchas y turnos */}
         <PublicBookingView
           courts={courts}
           reservations={reservations}
@@ -198,7 +188,7 @@ function PortalApp() {
         />
       </main>
 
-      {/* Public Footer */}
+      {/* Pie de página público */}
       <footer className="bg-white border-t border-slate-200/80 py-6 px-4 text-center text-xs text-slate-400">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
           <div className="flex items-center gap-2">
@@ -216,13 +206,13 @@ function PortalApp() {
               className="text-[#0D5FAE] hover:underline flex items-center gap-1 font-semibold"
             >
               <span className="material-symbols-outlined text-[14px]">chat</span>
-              <span>WhatsApp Oficial</span>
+              <span>WhatsApp</span>
             </a>
           </div>
         </div>
       </footer>
 
-      {/* Booking Form Modal with Step 1 (Inputs) and Step 2 (Review) */}
+      {/* Modal de Reserva: Paso 1 (Datos) y Paso 2 (Revisión) */}
       <PublicBookingModal
         isOpen={isBookingModalOpen}
         onClose={() => setIsBookingModalOpen(false)}
@@ -233,16 +223,15 @@ function PortalApp() {
         onConfirmReservation={handleConfirmReservation}
       />
 
-      {/* Booking Confirmation Receipt Modal with WhatsApp Voucher & Cancel */}
+      {/* Modal de Confirmación y Comprobante (Requisito #1: sin cancelación) */}
       <BookingConfirmationModal
         isOpen={isConfirmationOpen}
         reservation={confirmedReservation}
         club={club}
         onClose={handleCloseConfirmation}
-        onCancelReservation={handleCancelReservation}
       />
 
-      {/* Floating feedback toast */}
+      {/* Toast informativo */}
       <Toast message={toastMessage} onClose={() => setToastMessage(null)} />
     </div>
   );

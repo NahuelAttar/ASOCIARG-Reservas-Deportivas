@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Court, CustomerData, calculateEndTime, ClubInfo } from '../types';
 import { formatDateReadable, formatSlotInterval } from '../utils/dateUtils';
+import { isValidPhone, normalizePhone } from '../utils/phoneUtils';
 
 interface PublicBookingModalProps {
   isOpen: boolean;
@@ -22,7 +23,7 @@ interface PublicBookingModalProps {
 export const PublicBookingModal: React.FC<PublicBookingModalProps> = ({
   isOpen,
   onClose,
-  club,
+  club: _club,
   court,
   startTime,
   date,
@@ -36,7 +37,7 @@ export const PublicBookingModal: React.FC<PublicBookingModalProps> = ({
   const [confirmError, setConfirmError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Reset or initialize state on open
+  // Inicializar estado al abrir
   useEffect(() => {
     if (isOpen) {
       setStep('form');
@@ -51,15 +52,18 @@ export const PublicBookingModal: React.FC<PublicBookingModalProps> = ({
   const endTime = calculateEndTime(startTime, court.sport);
   const slotIntervalText = formatSlotInterval(startTime, court.sport);
   const formattedDate = formatDateReadable(date);
+  const courtDisplayName = court.feature
+    ? `${court.name} · ${court.feature}`
+    : court.name;
 
-  // Handle step 1: Validate and go to review
+  // Paso 1: Validar datos e ir a Revisión (Requisito #11, #12, #13)
   const handleProceedToReview = (e: React.FormEvent) => {
     e.preventDefault();
     setFormError(null);
 
     const trimmedFirst = firstName.trim();
     const trimmedLast = lastName.trim();
-    const trimmedPhone = phone.trim();
+    const rawPhone = phone.trim();
 
     if (!trimmedFirst) {
       setFormError('Por favor ingresá tu nombre.');
@@ -71,20 +75,21 @@ export const PublicBookingModal: React.FC<PublicBookingModalProps> = ({
       return;
     }
 
-    if (!trimmedPhone || trimmedPhone.length < 6) {
-      setFormError('Por favor ingresá un número de teléfono válido para la reserva.');
+    if (!rawPhone || !isValidPhone(rawPhone)) {
+      setFormError('Por favor ingresá un número de teléfono válido (ej: 3564-445566).');
       return;
     }
 
     setStep('review');
   };
 
-  // Handle step 2: Final confirmation with anti-collision validation
+  // Paso 2: Confirmar reserva definitiva
   const handleFinalConfirm = async () => {
     setConfirmError(null);
     setIsSubmitting(true);
 
     try {
+      const normalizedPhone = normalizePhone(phone);
       const result = await onConfirmReservation({
         court,
         startTime,
@@ -93,18 +98,17 @@ export const PublicBookingModal: React.FC<PublicBookingModalProps> = ({
         customer: {
           firstName: firstName.trim(),
           lastName: lastName.trim(),
-          phone: phone.trim(),
+          phone: normalizedPhone,
         },
       });
 
       if (!result.success) {
         setConfirmError(
-          result.error ||
-            'No pudimos confirmar la reserva. Verificá el horario e intentá nuevamente.'
+          result.error || 'No pudimos completar la reserva. Intentá nuevamente.'
         );
       }
     } catch {
-      setConfirmError('No pudimos confirmar la reserva. Verificá el horario e intentá nuevamente.');
+      setConfirmError('No pudimos completar la reserva. Intentá nuevamente.');
     } finally {
       setIsSubmitting(false);
     }
@@ -114,7 +118,7 @@ export const PublicBookingModal: React.FC<PublicBookingModalProps> = ({
     <AnimatePresence>
       {isOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4">
-          {/* Backdrop */}
+          {/* Fondo oscuro */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -124,7 +128,7 @@ export const PublicBookingModal: React.FC<PublicBookingModalProps> = ({
             className="fixed inset-0 bg-slate-900/50 backdrop-blur-xs cursor-pointer"
           />
 
-          {/* Modal Container */}
+          {/* Tarjeta del modal */}
           <motion.div
             initial={{ opacity: 0, scale: 0.95, y: 15 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -132,7 +136,7 @@ export const PublicBookingModal: React.FC<PublicBookingModalProps> = ({
             transition={{ type: 'spring', damping: 26, stiffness: 320 }}
             className="relative w-full max-w-md max-h-[92vh] flex flex-col bg-white rounded-3xl shadow-2xl overflow-hidden border border-slate-200 z-10"
           >
-            {/* Header with Steps Breadcrumb */}
+            {/* Cabecera */}
             <div className="px-5 py-4 bg-slate-50 border-b border-slate-100 flex items-center justify-between shrink-0">
               <div>
                 <div className="flex items-center gap-2">
@@ -140,11 +144,11 @@ export const PublicBookingModal: React.FC<PublicBookingModalProps> = ({
                     {court.sportLabel}
                   </span>
                   <span className="text-xs text-slate-400 font-medium">·</span>
-                  <span className="text-xs font-bold text-slate-700">{court.name}</span>
+                  <span className="text-xs font-bold text-slate-700">{courtDisplayName}</span>
                 </div>
-                <h2 className="text-base sm:text-lg font-extrabold text-slate-900 mt-1 tracking-tight">
-                  {step === 'form' ? 'Tus Datos de Reserva' : 'Revisión de la Reserva'}
-                </h2>
+                <h3 className="text-base sm:text-lg font-extrabold text-slate-900 mt-1 tracking-tight">
+                  {step === 'form' ? 'Datos del Reservante' : 'Revisión de la Reserva'}
+                </h3>
               </div>
 
               <button
@@ -158,10 +162,10 @@ export const PublicBookingModal: React.FC<PublicBookingModalProps> = ({
               </button>
             </div>
 
-            {/* STEP 1: FORM INPUTS */}
+            {/* PASO 1: DATOS (Requisito #11: Nombre, Apellido, Teléfono únicamente) */}
             {step === 'form' && (
               <form onSubmit={handleProceedToReview} className="flex-1 overflow-y-auto p-5 flex flex-col gap-4 text-xs">
-                {/* Selected Slot Recap */}
+                {/* Resumen del turno seleccionado */}
                 <div className="p-3.5 bg-blue-50/70 rounded-2xl border border-blue-100 flex items-center justify-between">
                   <div className="flex flex-col gap-0.5">
                     <span className="text-[11px] font-semibold text-slate-500 capitalize">
@@ -172,14 +176,14 @@ export const PublicBookingModal: React.FC<PublicBookingModalProps> = ({
                     </span>
                   </div>
                   <div className="text-right">
-                    <span className="text-[10px] text-slate-400 block font-medium">Total por turno</span>
+                    <span className="text-[10px] text-slate-400 block font-medium">Total</span>
                     <span className="text-sm sm:text-base font-black text-slate-900 tabular-nums">
                       ${court.price.toLocaleString('es-AR')}
                     </span>
                   </div>
                 </div>
 
-                {/* Form Error Banner */}
+                {/* Error de validación */}
                 {formError && (
                   <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 flex items-center gap-2">
                     <span className="material-symbols-outlined text-[16px] shrink-0">error</span>
@@ -224,7 +228,7 @@ export const PublicBookingModal: React.FC<PublicBookingModalProps> = ({
 
                   <div className="flex flex-col gap-1">
                     <label htmlFor="booking-phone" className="text-[11px] font-bold text-slate-700">
-                      Teléfono celular (WhatsApp) *
+                      Teléfono celular *
                     </label>
                     <input
                       id="booking-phone"
@@ -235,13 +239,10 @@ export const PublicBookingModal: React.FC<PublicBookingModalProps> = ({
                       placeholder="Ej: 3564-445566"
                       className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-900 placeholder-slate-400 focus:outline-none focus:border-[#0D5FAE] focus:bg-white"
                     />
-                    <span className="text-[10px] text-slate-400">
-                      Para compartirte la confirmación y avisos del complejo.
-                    </span>
                   </div>
                 </div>
 
-                {/* Direct buttons */}
+                {/* Acciones */}
                 <div className="pt-2 flex items-center gap-3 mt-auto">
                   <button
                     type="button"
@@ -255,38 +256,34 @@ export const PublicBookingModal: React.FC<PublicBookingModalProps> = ({
                     type="submit"
                     className="flex-1 py-3 px-6 rounded-full bg-[#0D5FAE] hover:bg-[#094785] text-white font-extrabold text-xs sm:text-sm transition-all shadow-md cursor-pointer flex items-center justify-center gap-2"
                   >
-                    <span>Continuar a Revisión</span>
+                    <span>Revisar reserva</span>
                     <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
                   </button>
                 </div>
               </form>
             )}
 
-            {/* STEP 2: REVIEW BEFORE CONFIRMATION (REQUISITO #7) */}
+            {/* PASO 2: REVISIÓN ANTES DE CONFIRMAR (Requisito #13: Deporte, Cancha, Fecha, Horario, Nombre, Teléfono, Total) */}
             {step === 'review' && (
               <div className="flex-1 overflow-y-auto p-5 flex flex-col gap-4 text-xs">
-                {/* Collision / Error Alert */}
+                {/* Alerta de error si el turno dejó de estar disponible (Requisito #17) */}
                 {confirmError && (
                   <div className="p-3.5 rounded-2xl bg-amber-50 border border-amber-300 text-amber-900 flex items-start gap-2.5">
                     <span className="material-symbols-outlined text-[20px] text-amber-600 shrink-0 mt-0.5">
                       warning
                     </span>
-                    <div className="flex flex-col gap-1">
-                      <span className="font-extrabold text-xs">Atención</span>
+                    <div className="flex flex-col gap-0.5">
+                      <span className="font-extrabold text-xs">Horario no disponible</span>
                       <p className="text-xs leading-relaxed text-amber-800">{confirmError}</p>
                     </div>
                   </div>
                 )}
 
-                {/* Review Card matching user's requested specification */}
+                {/* Resumen exacto según Requisito #13 */}
                 <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 flex flex-col gap-3">
-                  <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">
-                    Resumen de la Reserva
-                  </span>
-
-                  <div className="flex flex-col gap-1.5 pb-2.5 border-b border-slate-200/80">
+                  <div className="flex flex-col gap-1 pb-2.5 border-b border-slate-200/80">
                     <div className="text-base font-extrabold text-slate-900">
-                      {court.sportLabel} - {court.name}
+                      {court.sportLabel} - {courtDisplayName}
                     </div>
                     <div className="text-xs font-semibold text-slate-600 capitalize">
                       {formattedDate}
@@ -297,30 +294,28 @@ export const PublicBookingModal: React.FC<PublicBookingModalProps> = ({
                   </div>
 
                   <div className="flex flex-col gap-1 pb-2.5 border-b border-slate-200/80 text-xs">
-                    <span className="text-slate-500 font-medium">A nombre de:</span>
-                    <span className="text-sm font-extrabold text-slate-900">
-                      {firstName} {lastName}
-                    </span>
-                    <span className="text-slate-600 font-medium flex items-center gap-1 mt-0.5">
-                      <span className="material-symbols-outlined text-[14px] text-slate-400">call</span>
-                      <span>{phone}</span>
-                    </span>
+                    <div>
+                      <span className="text-slate-500 font-medium">A nombre de </span>
+                      <strong className="text-slate-900 font-bold">
+                        {firstName} {lastName}
+                      </strong>
+                    </div>
+                    <div className="text-slate-600 font-medium mt-0.5">
+                      <span>Teléfono: </span>
+                      <strong className="text-slate-800">{phone}</strong>
+                    </div>
                   </div>
 
+                  {/* Únicamente Total: $X (Requisito #4: sin información de dónde ni cómo se paga) */}
                   <div className="flex items-center justify-between pt-1">
-                    <span className="font-bold text-slate-700 text-xs sm:text-sm">Total a abonar:</span>
+                    <span className="font-bold text-slate-700 text-sm">Total:</span>
                     <span className="text-lg sm:text-xl font-black text-slate-900 tabular-nums">
                       ${court.price.toLocaleString('es-AR')}
                     </span>
                   </div>
                 </div>
 
-                {/* Info Note */}
-                <p className="text-[11px] text-slate-500 leading-relaxed px-1">
-                  El turno se abona en la recepción de <strong>{club.name}</strong> al momento de asistir.
-                </p>
-
-                {/* Actions */}
+                {/* Acciones */}
                 <div className="pt-2 flex items-center gap-3 mt-auto">
                   <button
                     type="button"

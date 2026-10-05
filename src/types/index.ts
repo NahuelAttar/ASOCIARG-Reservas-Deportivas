@@ -18,36 +18,33 @@ export interface Court {
   name: string;
   sport: SportType;
   sportLabel: string;
-  price: number; // Precio fijado por el club para el turno (solo lectura para el público)
-  isCovered?: boolean;
-  surface?: string;
-  description?: string;
+  feature?: string; // Característica relevante concisa: ej: "Cristal", "Techada", "Polvo de ladrillo", "Sintético Pro"
+  price: number; // Tarifa fijada por el club para el turno (solo lectura)
 }
 
 export interface CustomerData {
   firstName: string;
   lastName: string;
   phone: string;
-  notes?: string;
 }
 
 export interface PublicReservation {
-  id: string;
-  bookingCode: string; // ej: "RES-8492"
-  clubId: string;
+  id: string; // ID interno únicamente para React keys y estado (no visible al usuario)
+  clubId?: string;
   courtId: string;
   courtName: string;
+  feature?: string;
   sport: SportType;
   sportLabel: string;
   date: string; // YYYY-MM-DD
-  startTime: string; // "19:00"
-  endTime: string; // "20:30"
+  startTime: string; // "12:00"
+  endTime: string; // "13:30"
   price: number;
   customer: CustomerData;
   createdAt: string;
 }
 
-// Horarios de turnos desde las 9am con 1h 30m para Pádel y Tenis:
+// Horarios de turnos desde las 9am con 1h 30m para Pádel y Tenis
 export const PADEL_TENIS_SLOTS: string[] = [
   '09:00',
   '10:30',
@@ -99,4 +96,33 @@ export function calculateEndTime(startTime: string, sport: SportType): string {
   const endMinutes = totalMins % 60;
 
   return `${String(endHours).padStart(2, '0')}:${String(endMinutes).padStart(2, '0')}`;
+}
+
+/**
+ * Convierte una hora en formato HH:mm a minutos totales del día
+ */
+export function timeToMinutes(timeStr: string): number {
+  const [h, m] = timeStr.split(':').map(Number);
+  return (h || 0) * 60 + (m || 0);
+}
+
+/**
+ * Determina si dos intervalos de tiempo se superponen.
+ * Maneja el caso de medianoche (ej: 22:30 a 00:00).
+ */
+export function doIntervalsOverlap(
+  startA: string,
+  endA: string,
+  startB: string,
+  endB: string
+): boolean {
+  const aStart = timeToMinutes(startA);
+  let aEnd = timeToMinutes(endA);
+  if (aEnd <= aStart) aEnd += 24 * 60;
+
+  const bStart = timeToMinutes(startB);
+  let bEnd = timeToMinutes(endB);
+  if (bEnd <= bStart) bEnd += 24 * 60;
+
+  return aStart < bEnd && aEnd > bStart;
 }

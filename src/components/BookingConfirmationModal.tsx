@@ -43,11 +43,33 @@ export const BookingConfirmationModal: React.FC<BookingConfirmationModalProps> =
 
   const handleCopy = async () => {
     try {
-      await navigator.clipboard.writeText(confirmationMessage);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2500);
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(confirmationMessage);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2500);
+        return;
+      }
+      throw new Error('Clipboard API no disponible');
     } catch {
-      // Fallback si el navegador restringe clipboard
+      // Fallback para iframes y navegadores con restricciones de portapapeles
+      try {
+        const textArea = document.createElement('textarea');
+        textArea.value = confirmationMessage;
+        textArea.style.position = 'fixed';
+        textArea.style.left = '-9999px';
+        textArea.style.top = '-9999px';
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        const success = document.execCommand('copy');
+        document.body.removeChild(textArea);
+        if (success) {
+          setCopied(true);
+          setTimeout(() => setCopied(false), 2500);
+        }
+      } catch {
+        // Fallback sin interrupción
+      }
     }
   };
 

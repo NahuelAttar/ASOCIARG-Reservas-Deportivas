@@ -7,7 +7,7 @@ import { isValidPhone, normalizePhone } from '../utils/phoneUtils';
 interface PublicBookingModalProps {
   isOpen: boolean;
   onClose: () => void;
-  club: ClubInfo;
+  club?: ClubInfo;
   court: Court | null;
   startTime: string;
   date: string;
@@ -37,15 +37,18 @@ export const PublicBookingModal: React.FC<PublicBookingModalProps> = ({
   const [confirmError, setConfirmError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Inicializar estado al abrir
+  // Inicializar y limpiar campos cada vez que se abre una nueva reserva (Requisito #14)
   useEffect(() => {
     if (isOpen) {
       setStep('form');
+      setFirstName('');
+      setLastName('');
+      setPhone('');
       setFormError(null);
       setConfirmError(null);
       setIsSubmitting(false);
     }
-  }, [isOpen, court, startTime, date]);
+  }, [isOpen]);
 
   if (!court) return null;
 

@@ -40,10 +40,8 @@ export const PublicHeader: React.FC<PublicHeaderProps> = ({
         <div className="bg-slate-900 text-white text-[11px] py-1.5 px-3 sm:px-6">
           <div className="max-w-7xl mx-auto flex items-center justify-between gap-2">
             <div className="flex items-center gap-1.5 text-slate-300 truncate">
-              <span className="material-symbols-outlined text-[14px] text-emerald-400">link</span>
-              <span className="text-slate-400 font-mono">club.com/</span>
-              <span className="font-bold text-white font-mono">{club.slug}</span>
-              <span className="text-slate-400 font-mono">/reservas</span>
+              <span className="material-symbols-outlined text-[14px] text-emerald-400">sports_tennis</span>
+              <span className="font-semibold text-slate-200">Portal de Reservas</span>
             </div>
 
             <div className="hidden sm:flex items-center gap-3 text-slate-300">

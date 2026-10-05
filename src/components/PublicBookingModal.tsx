@@ -239,6 +239,9 @@ export const PublicBookingModal: React.FC<PublicBookingModalProps> = ({
                       placeholder="Ej: 3564-445566"
                       className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-900 placeholder-slate-400 focus:outline-none focus:border-[#0D5FAE] focus:bg-white"
                     />
+                    <span className="text-[10px] text-slate-400">
+                      Usaremos este número para la confirmación de tu reserva.
+                    </span>
                   </div>
                 </div>
 
@@ -288,8 +291,11 @@ export const PublicBookingModal: React.FC<PublicBookingModalProps> = ({
                     <div className="text-xs font-semibold text-slate-600 capitalize">
                       {formattedDate}
                     </div>
-                    <div className="text-sm font-black text-[#0D5FAE] tabular-nums">
-                      {slotIntervalText}
+                    <div className="flex items-center justify-between text-sm font-black text-[#0D5FAE] tabular-nums">
+                      <span>{slotIntervalText}</span>
+                      <span className="text-xs font-semibold text-slate-500">
+                        Duración: {court.sport === 'futbol' ? '1 hora' : '1h 30m'}
+                      </span>
                     </div>
                   </div>
 

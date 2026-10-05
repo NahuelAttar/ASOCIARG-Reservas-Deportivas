@@ -173,7 +173,7 @@ function PortalApp() {
               Portal de Reservas de Canchas
             </h1>
             <p className="text-xs sm:text-sm text-blue-100 mt-1 leading-relaxed">
-              Consultá la disponibilidad y reservá tu cancha.
+              Consultá los horarios disponibles y reservá tu cancha.
             </p>
           </div>
           <div className="absolute -right-6 -bottom-8 w-40 h-40 bg-white/5 rounded-full pointer-events-none" />

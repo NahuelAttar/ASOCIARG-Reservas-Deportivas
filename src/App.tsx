@@ -13,7 +13,58 @@ import {
 import { Court, CustomerData, PublicReservation } from './types';
 import { PORTAL_BASE_TODAY } from './utils/dateUtils';
 
-export default function App() {
+interface ErrorBoundaryProps {
+  children: React.ReactNode;
+}
+
+interface ErrorBoundaryState {
+  hasError: boolean;
+}
+
+class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
+  constructor(props: ErrorBoundaryProps) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError(): ErrorBoundaryState {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    console.error('ErrorBoundary caught:', error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6 text-center">
+          <div className="max-w-md bg-white p-8 rounded-3xl border border-slate-200 shadow-md flex flex-col items-center gap-3">
+            <span className="material-symbols-outlined text-4xl text-[#0D5FAE]">
+              sports_tennis
+            </span>
+            <h2 className="text-base font-bold text-slate-800">
+              Reiniciar vista del portal
+            </h2>
+            <p className="text-xs text-slate-500 leading-relaxed">
+              Ocurrió un inconveniente temporal al cambiar de sección. Podés reiniciar la vista para continuar reservando.
+            </p>
+            <button
+              type="button"
+              onClick={() => this.setState({ hasError: false })}
+              className="mt-2 px-6 py-2.5 rounded-full bg-[#0D5FAE] text-white font-extrabold text-xs cursor-pointer shadow-xs"
+            >
+              Volver a cargar
+            </button>
+          </div>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+function PortalApp() {
   const [club] = useState(MOCK_CLUB);
   const [currentDate, setCurrentDate] = useState<string>(PORTAL_BASE_TODAY);
   const [courts] = useState<Court[]>(INITIAL_COURTS);
@@ -194,5 +245,13 @@ export default function App() {
       {/* Floating feedback toast */}
       <Toast message={toastMessage} onClose={() => setToastMessage(null)} />
     </div>
+  );
+}
+
+export default function App() {
+  return (
+    <ErrorBoundary>
+      <PortalApp />
+    </ErrorBoundary>
   );
 }

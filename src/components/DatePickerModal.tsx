@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { PORTAL_BASE_TODAY, isPastDate } from '../utils/dateUtils';
+import { PORTAL_BASE_TODAY, isPastDate, stepDate, formatDateShort } from '../utils/dateUtils';
 
 interface DatePickerModalProps {
   isOpen: boolean;
@@ -30,6 +30,15 @@ export const DatePickerModal: React.FC<DatePickerModalProps> = ({
   const initialDate = parseDate(selectedDate);
   const [viewYear, setViewYear] = useState(initialDate.getFullYear());
   const [viewMonth, setViewMonth] = useState(initialDate.getMonth()); // 0-indexed
+
+  // Sync calendar view year & month whenever selectedDate or isOpen changes
+  useEffect(() => {
+    if (isOpen) {
+      const d = parseDate(selectedDate);
+      setViewYear(d.getFullYear());
+      setViewMonth(d.getMonth());
+    }
+  }, [isOpen, selectedDate]);
 
   // Format helper to YYYY-MM-DD
   const formatYMD = (year: number, month: number, day: number) => {
@@ -90,6 +99,11 @@ export const DatePickerModal: React.FC<DatePickerModalProps> = ({
     onClose();
   };
 
+  const day0Str = minDate;
+  const day1Str = stepDate(day0Str, 1);
+  const day2Str = stepDate(day0Str, 2);
+  const day3Str = stepDate(day0Str, 3);
+
   return (
     <AnimatePresence>
       {isOpen && (
@@ -113,6 +127,7 @@ export const DatePickerModal: React.FC<DatePickerModalProps> = ({
                 </h3>
               </div>
               <button
+                type="button"
                 onClick={onClose}
                 className="w-8 h-8 rounded-full bg-slate-200/80 hover:bg-slate-200 text-slate-600 flex items-center justify-center transition-colors cursor-pointer"
                 title="Cerrar"
@@ -126,58 +141,58 @@ export const DatePickerModal: React.FC<DatePickerModalProps> = ({
               <button
                 type="button"
                 onClick={() => {
-                  onSelectDate('2024-10-30');
+                  onSelectDate(day0Str);
                   onClose();
                 }}
                 className={`px-3 py-1 rounded-full text-xs font-bold transition-all cursor-pointer ${
-                  selectedDate === '2024-10-30'
+                  selectedDate === day0Str
                     ? 'bg-[#0D5FAE] text-white shadow-xs'
                     : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-100'
                 }`}
               >
-                Hoy (Mié 30)
+                Hoy ({formatDateShort(day0Str)})
               </button>
               <button
                 type="button"
                 onClick={() => {
-                  onSelectDate('2024-10-31');
+                  onSelectDate(day1Str);
                   onClose();
                 }}
                 className={`px-3 py-1 rounded-full text-xs font-bold transition-all cursor-pointer ${
-                  selectedDate === '2024-10-31'
+                  selectedDate === day1Str
                     ? 'bg-[#0D5FAE] text-white shadow-xs'
                     : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-100'
                 }`}
               >
-                Mañana (Jue 31)
+                Mañana ({formatDateShort(day1Str)})
               </button>
               <button
                 type="button"
                 onClick={() => {
-                  onSelectDate('2024-11-01');
+                  onSelectDate(day2Str);
                   onClose();
                 }}
                 className={`px-3 py-1 rounded-full text-xs font-bold transition-all cursor-pointer ${
-                  selectedDate === '2024-11-01'
+                  selectedDate === day2Str
                     ? 'bg-[#0D5FAE] text-white shadow-xs'
                     : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-100'
                 }`}
               >
-                Vie 1 Nov
+                {formatDateShort(day2Str)}
               </button>
               <button
                 type="button"
                 onClick={() => {
-                  onSelectDate('2024-11-02');
+                  onSelectDate(day3Str);
                   onClose();
                 }}
                 className={`px-3 py-1 rounded-full text-xs font-bold transition-all cursor-pointer ${
-                  selectedDate === '2024-11-02'
+                  selectedDate === day3Str
                     ? 'bg-[#0D5FAE] text-white shadow-xs'
                     : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-100'
                 }`}
               >
-                Sáb 2 Nov
+                {formatDateShort(day3Str)}
               </button>
             </div>
 

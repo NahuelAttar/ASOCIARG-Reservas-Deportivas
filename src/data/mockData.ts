@@ -1,4 +1,5 @@
 import { ClubInfo, Court, PublicReservation } from '../types';
+import { PORTAL_BASE_TODAY, stepDate } from '../utils/dateUtils';
 
 export const MOCK_CLUB: ClubInfo = {
   id: 'club-san-francisco',
@@ -160,7 +161,10 @@ export const INITIAL_COURTS: Court[] = [
   },
 ];
 
-// Ocupación inicial para que el usuario público vea claramente qué turnos están ocupados y cuáles libres
+const today = PORTAL_BASE_TODAY;
+const tomorrow = stepDate(today, 1);
+
+// Ocupación inicial para que el usuario público vea claramente qué turnos están ocupados y cuáles libres hoy y mañana
 export const INITIAL_PUBLIC_RESERVATIONS: PublicReservation[] = [
   {
     id: 'res-init-1',
@@ -170,12 +174,12 @@ export const INITIAL_PUBLIC_RESERVATIONS: PublicReservation[] = [
     courtName: 'Cancha 1 · Cristal',
     sport: 'padel',
     sportLabel: 'Pádel',
-    date: '2024-10-30',
+    date: today,
     startTime: '09:00',
     endTime: '10:30',
     price: 12000,
     customer: { firstName: 'Lucas', lastName: 'G.', phone: '3564-998811' },
-    createdAt: '2024-10-29T10:00:00',
+    createdAt: new Date().toISOString(),
   },
   {
     id: 'res-init-2',
@@ -185,12 +189,12 @@ export const INITIAL_PUBLIC_RESERVATIONS: PublicReservation[] = [
     courtName: 'Cancha 1 · Cristal',
     sport: 'padel',
     sportLabel: 'Pádel',
-    date: '2024-10-30',
+    date: today,
     startTime: '18:00',
     endTime: '19:30',
     price: 12000,
     customer: { firstName: 'Juan', lastName: 'P.', phone: '3564-410022' },
-    createdAt: '2024-10-29T11:00:00',
+    createdAt: new Date().toISOString(),
   },
   {
     id: 'res-init-3',
@@ -200,12 +204,12 @@ export const INITIAL_PUBLIC_RESERVATIONS: PublicReservation[] = [
     courtName: 'Cancha 2 · Techada',
     sport: 'padel',
     sportLabel: 'Pádel',
-    date: '2024-10-30',
+    date: today,
     startTime: '19:30',
     endTime: '21:00',
     price: 12000,
     customer: { firstName: 'Carla', lastName: 'B.', phone: '3564-672190' },
-    createdAt: '2024-10-29T12:00:00',
+    createdAt: new Date().toISOString(),
   },
   {
     id: 'res-init-4',
@@ -215,12 +219,12 @@ export const INITIAL_PUBLIC_RESERVATIONS: PublicReservation[] = [
     courtName: 'Cancha 1 · Sintético Pro',
     sport: 'futbol',
     sportLabel: 'Fútbol 7',
-    date: '2024-10-30',
+    date: today,
     startTime: '20:00',
     endTime: '21:00',
     price: 25000,
     customer: { firstName: 'Martín', lastName: 'G.', phone: '3564-582910' },
-    createdAt: '2024-10-29T14:00:00',
+    createdAt: new Date().toISOString(),
   },
   {
     id: 'res-init-5',
@@ -230,12 +234,12 @@ export const INITIAL_PUBLIC_RESERVATIONS: PublicReservation[] = [
     courtName: 'Cancha 2 · Sintético Pro',
     sport: 'futbol',
     sportLabel: 'Fútbol 7',
-    date: '2024-10-30',
+    date: today,
     startTime: '21:00',
     endTime: '22:00',
     price: 25000,
     customer: { firstName: 'Matías', lastName: 'R.', phone: '3564-445299' },
-    createdAt: '2024-10-29T15:00:00',
+    createdAt: new Date().toISOString(),
   },
   {
     id: 'res-init-6',
@@ -245,11 +249,26 @@ export const INITIAL_PUBLIC_RESERVATIONS: PublicReservation[] = [
     courtName: 'Cancha 1 · Polvo de ladrillo',
     sport: 'tenis',
     sportLabel: 'Tenis',
-    date: '2024-10-30',
+    date: today,
     startTime: '18:00',
     endTime: '19:30',
     price: 15000,
     customer: { firstName: 'Carlos', lastName: 'M.', phone: '3564-332211' },
-    createdAt: '2024-10-29T16:00:00',
+    createdAt: new Date().toISOString(),
+  },
+  {
+    id: 'res-init-7',
+    bookingCode: 'RES-4017',
+    clubId: 'club-san-francisco',
+    courtId: 'padel-3',
+    courtName: 'Cancha 3 · Cristal',
+    sport: 'padel',
+    sportLabel: 'Pádel',
+    date: tomorrow,
+    startTime: '19:30',
+    endTime: '21:00',
+    price: 12000,
+    customer: { firstName: 'Gonzalo', lastName: 'M.', phone: '3564-112233' },
+    createdAt: new Date().toISOString(),
   },
 ];

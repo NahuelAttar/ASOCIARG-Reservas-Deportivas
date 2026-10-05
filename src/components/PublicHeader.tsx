@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { motion } from 'motion/react';
 import { ClubInfo } from '../types';
 import { DatePickerModal } from './DatePickerModal';
 import {
@@ -22,12 +21,15 @@ export const PublicHeader: React.FC<PublicHeaderProps> = ({
 }) => {
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
 
-  const isToday = currentDate === PORTAL_BASE_TODAY;
-  const isTomorrow = currentDate === stepDate(PORTAL_BASE_TODAY, 1);
-  const isAtMinDate = currentDate <= PORTAL_BASE_TODAY;
+  const todayStr = PORTAL_BASE_TODAY;
+  const tomorrowStr = stepDate(todayStr, 1);
+
+  const isToday = currentDate === todayStr;
+  const isTomorrow = currentDate === tomorrowStr;
+  const isAtMinDate = currentDate <= todayStr;
 
   const handleStep = (offset: number) => {
-    const next = stepDate(currentDate, offset, PORTAL_BASE_TODAY);
+    const next = stepDate(currentDate, offset, todayStr);
     onDateChange(next);
   };
 
@@ -104,36 +106,26 @@ export const PublicHeader: React.FC<PublicHeaderProps> = ({
 
               <button
                 type="button"
-                onClick={() => onDateChange(PORTAL_BASE_TODAY)}
-                className={`relative z-10 px-3 py-1.5 rounded-full transition-colors cursor-pointer ${
-                  isToday ? 'text-white font-bold' : 'text-slate-600 hover:text-slate-900'
+                onClick={() => onDateChange(todayStr)}
+                className={`px-3 py-1.5 rounded-full transition-colors cursor-pointer ${
+                  isToday
+                    ? 'bg-slate-900 text-white font-bold shadow-xs'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
                 }`}
               >
-                {isToday && (
-                  <motion.div
-                    layoutId="activeDatePill"
-                    className="absolute inset-0 bg-slate-900 rounded-full shadow-xs z-[-1]"
-                    transition={{ type: 'spring', stiffness: 380, damping: 30 }}
-                  />
-                )}
-                Hoy (Mié 30)
+                Hoy ({formatDateShort(todayStr)})
               </button>
 
               <button
                 type="button"
-                onClick={() => onDateChange(stepDate(PORTAL_BASE_TODAY, 1))}
-                className={`relative z-10 px-3 py-1.5 rounded-full transition-colors cursor-pointer ${
-                  isTomorrow ? 'text-white font-bold' : 'text-slate-600 hover:text-slate-900'
+                onClick={() => onDateChange(tomorrowStr)}
+                className={`px-3 py-1.5 rounded-full transition-colors cursor-pointer ${
+                  isTomorrow
+                    ? 'bg-slate-900 text-white font-bold shadow-xs'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
                 }`}
               >
-                {isTomorrow && (
-                  <motion.div
-                    layoutId="activeDatePill"
-                    className="absolute inset-0 bg-slate-900 rounded-full shadow-xs z-[-1]"
-                    transition={{ type: 'spring', stiffness: 380, damping: 30 }}
-                  />
-                )}
-                Mañana (Jue 31)
+                Mañana ({formatDateShort(tomorrowStr)})
               </button>
 
               {/* Forward button */}
@@ -150,7 +142,7 @@ export const PublicHeader: React.FC<PublicHeaderProps> = ({
               <button
                 type="button"
                 onClick={() => setIsDatePickerOpen(true)}
-                className={`relative z-10 px-3 py-1.5 rounded-full transition-colors cursor-pointer flex items-center gap-1.5 ${
+                className={`px-3 py-1.5 rounded-full transition-colors cursor-pointer flex items-center gap-1.5 ${
                   !isToday && !isTomorrow
                     ? 'text-white font-bold bg-[#0D5FAE] shadow-xs'
                     : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
@@ -185,7 +177,7 @@ export const PublicHeader: React.FC<PublicHeaderProps> = ({
               disabled={isAtMinDate}
               onClick={() => handleStep(-1)}
               className={`w-6 h-6 rounded-full flex items-center justify-center ${
-                isAtMinDate ? 'text-slate-300 opacity-40 cursor-not-allowed' : 'text-slate-600 hover:bg-slate-300'
+                isAtMinDate ? 'text-slate-300 opacity-40 cursor-not-allowed' : 'text-slate-600 hover:bg-slate-300 cursor-pointer'
               }`}
               title={isAtMinDate ? 'No se pueden consultar fechas pasadas' : 'Día anterior'}
             >
@@ -194,7 +186,7 @@ export const PublicHeader: React.FC<PublicHeaderProps> = ({
 
             <button
               type="button"
-              onClick={() => onDateChange(PORTAL_BASE_TODAY)}
+              onClick={() => onDateChange(todayStr)}
               className={`px-2.5 py-1 rounded-full transition-colors cursor-pointer text-xs ${
                 isToday ? 'bg-slate-900 text-white font-bold shadow-xs' : 'text-slate-600'
               }`}
@@ -203,7 +195,7 @@ export const PublicHeader: React.FC<PublicHeaderProps> = ({
             </button>
             <button
               type="button"
-              onClick={() => onDateChange(stepDate(PORTAL_BASE_TODAY, 1))}
+              onClick={() => onDateChange(tomorrowStr)}
               className={`px-2.5 py-1 rounded-full transition-colors cursor-pointer text-xs ${
                 isTomorrow ? 'bg-slate-900 text-white font-bold shadow-xs' : 'text-slate-600'
               }`}
@@ -214,7 +206,7 @@ export const PublicHeader: React.FC<PublicHeaderProps> = ({
             <button
               type="button"
               onClick={() => handleStep(1)}
-              className="w-6 h-6 rounded-full flex items-center justify-center text-slate-600 hover:bg-slate-300"
+              className="w-6 h-6 rounded-full flex items-center justify-center text-slate-600 hover:bg-slate-300 cursor-pointer"
               title="Día siguiente"
             >
               <span className="material-symbols-outlined text-[14px]">chevron_right</span>
@@ -250,7 +242,7 @@ export const PublicHeader: React.FC<PublicHeaderProps> = ({
         isOpen={isDatePickerOpen}
         onClose={() => setIsDatePickerOpen(false)}
         selectedDate={currentDate}
-        minDate={PORTAL_BASE_TODAY}
+        minDate={todayStr}
         onSelectDate={(newDate) => {
           onDateChange(newDate);
         }}

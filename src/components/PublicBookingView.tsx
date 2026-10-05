@@ -1,11 +1,9 @@
 import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
 import {
   Court,
   PublicReservation,
   SportType,
   getSportSlots,
-  calculateEndTime,
   getSportDurationMinutes,
 } from '../types';
 import { formatDateReadable, formatSlotInterval } from '../utils/dateUtils';
@@ -91,19 +89,12 @@ export const PublicBookingView: React.FC<PublicBookingViewProps> = ({
                   key={cat.id}
                   type="button"
                   onClick={() => setSelectedSport(cat.id)}
-                  className={`relative h-10 px-4 sm:px-5 rounded-full text-xs sm:text-sm font-bold whitespace-nowrap transition-all cursor-pointer flex items-center gap-2 shrink-0 ${
+                  className={`h-10 px-4 sm:px-5 rounded-full text-xs sm:text-sm font-bold whitespace-nowrap transition-all cursor-pointer flex items-center gap-2 shrink-0 ${
                     isActive
-                      ? 'text-white shadow-xs'
+                      ? 'bg-slate-900 text-white shadow-xs'
                       : 'text-slate-700 hover:text-slate-900 bg-slate-50 border border-slate-200 hover:bg-slate-100'
                   }`}
                 >
-                  {isActive && (
-                    <motion.div
-                      layoutId="activePublicSportCategory"
-                      className="absolute inset-0 bg-slate-900 rounded-full z-[-1]"
-                      transition={{ type: 'spring', stiffness: 400, damping: 32 }}
-                    />
-                  )}
                   <span>
                     {cat.icon} {cat.label}
                   </span>
@@ -171,166 +162,157 @@ export const PublicBookingView: React.FC<PublicBookingViewProps> = ({
 
       {/* 2. Dynamic Courts & Availability List (Requisito #1, #2, #4, #5) */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <AnimatePresence mode="popLayout">
-          {courtsForSport.length === 0 ? (
-            <div className="col-span-full bg-white rounded-3xl border border-slate-200/80 p-12 text-center text-slate-400 text-xs font-medium flex flex-col items-center justify-center gap-2">
-              <span className="material-symbols-outlined text-[32px] text-slate-300">
-                search_off
-              </span>
-              <span>No se encontraron canchas con los filtros seleccionados.</span>
-              {searchQuery && (
-                <button
-                  type="button"
-                  onClick={() => setSearchQuery('')}
-                  className="mt-2 text-xs text-[#0D5FAE] font-bold hover:underline"
-                >
-                  Borrar filtro de búsqueda
-                </button>
-              )}
-            </div>
-          ) : (
-            courtsForSport.map((court, index) => {
-              const courtSlots = getSportSlots(court.sport);
-              const durationMinutes = getSportDurationMinutes(court.sport);
-              const durationText = durationMinutes === 90 ? '1h 30m' : '1h';
+        {courtsForSport.length === 0 ? (
+          <div className="col-span-full bg-white rounded-3xl border border-slate-200/80 p-12 text-center text-slate-400 text-xs font-medium flex flex-col items-center justify-center gap-2">
+            <span className="material-symbols-outlined text-[32px] text-slate-300">
+              search_off
+            </span>
+            <span>No se encontraron canchas con los filtros seleccionados.</span>
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery('')}
+                className="mt-2 text-xs text-[#0D5FAE] font-bold hover:underline cursor-pointer"
+              >
+                Borrar filtro de búsqueda
+              </button>
+            )}
+          </div>
+        ) : (
+          courtsForSport.map((court) => {
+            const courtSlots = getSportSlots(court.sport);
+            const durationMinutes = getSportDurationMinutes(court.sport);
+            const durationText = durationMinutes === 90 ? '1h 30m' : '1h';
 
-              // Calculate occupied count for this court on current date
-              const occupiedCount = courtSlots.filter((hour) =>
-                isSlotOccupied(court.id, hour)
-              ).length;
-              const freeCount = courtSlots.length - occupiedCount;
+            // Calculate occupied count for this court on current date
+            const occupiedCount = courtSlots.filter((hour) =>
+              isSlotOccupied(court.id, hour)
+            ).length;
+            const freeCount = courtSlots.length - occupiedCount;
 
-              return (
-                <motion.div
-                  layout
-                  key={court.id}
-                  initial={{ opacity: 0, y: 15 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.96 }}
-                  transition={{ duration: 0.2, delay: index * 0.02 }}
-                  className="bg-white rounded-3xl border border-slate-200/80 shadow-xs p-4 sm:p-5 flex flex-col justify-between gap-4 group"
-                >
-                  {/* Court Header Information (Requisito #2: deporte, nombre, características) */}
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex flex-col gap-1 min-w-0">
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#0D5FAE] bg-blue-50 px-2 py-0.5 rounded-full">
-                          {court.sportLabel}
+            return (
+              <div
+                key={court.id}
+                className="bg-white rounded-3xl border border-slate-200/80 shadow-xs p-4 sm:p-5 flex flex-col justify-between gap-4 group transition-shadow hover:shadow-md"
+              >
+                {/* Court Header Information (Requisito #2: deporte, nombre, características) */}
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex flex-col gap-1 min-w-0">
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#0D5FAE] bg-blue-50 px-2 py-0.5 rounded-full">
+                        {court.sportLabel}
+                      </span>
+
+                      {court.isCovered ? (
+                        <span className="text-[10px] font-bold text-slate-700 bg-slate-100 px-2 py-0.5 rounded-full flex items-center gap-1">
+                          <span className="material-symbols-outlined text-[12px] text-slate-500">
+                            roofing
+                          </span>
+                          <span>Techada</span>
                         </span>
+                      ) : (
+                        <span className="text-[10px] font-medium text-slate-500 bg-slate-100/80 px-2 py-0.5 rounded-full">
+                          Exterior
+                        </span>
+                      )}
 
-                        {court.isCovered ? (
-                          <span className="text-[10px] font-bold text-slate-700 bg-slate-100 px-2 py-0.5 rounded-full flex items-center gap-1">
-                            <span className="material-symbols-outlined text-[12px] text-slate-500">
-                              roofing
-                            </span>
-                            <span>Techada</span>
-                          </span>
-                        ) : (
-                          <span className="text-[10px] font-medium text-slate-500 bg-slate-100/80 px-2 py-0.5 rounded-full">
-                            Exterior
-                          </span>
-                        )}
-
-                        {court.surface && (
-                          <span className="text-[10px] font-bold text-slate-600 bg-slate-50 border border-slate-200/70 px-2 py-0.5 rounded-full">
-                            {court.surface}
-                          </span>
-                        )}
-                      </div>
-
-                      <h3 className="font-extrabold text-base sm:text-lg text-slate-900 tracking-tight mt-0.5">
-                        {court.name}
-                      </h3>
-
-                      {court.description && (
-                        <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed">
-                          {court.description}
-                        </p>
+                      {court.surface && (
+                        <span className="text-[10px] font-bold text-slate-600 bg-slate-50 border border-slate-200/70 px-2 py-0.5 rounded-full">
+                          {court.surface}
+                        </span>
                       )}
                     </div>
 
-                    {/* Price Tag (Read-only informative rate - Requisito #8) */}
-                    <div className="text-right shrink-0 bg-slate-50 px-3 py-1.5 rounded-2xl border border-slate-200/70">
-                      <div className="text-base sm:text-lg font-black text-slate-900 tabular-nums">
-                        ${court.price.toLocaleString('es-AR')}
-                      </div>
-                      <span className="text-[10px] text-slate-400 font-medium block">
-                        por turno ({durationText})
-                      </span>
-                    </div>
+                    <h3 className="font-extrabold text-base sm:text-lg text-slate-900 tracking-tight mt-0.5">
+                      {court.name}
+                    </h3>
+
+                    {court.description && (
+                      <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed">
+                        {court.description}
+                      </p>
+                    )}
                   </div>
 
-                  {/* Turnos Section (Requisitos #4 & #5: intervalo completo, disponible vs ocupado) */}
-                  <div className="flex flex-col gap-2.5 pt-2 border-t border-slate-100">
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="font-bold text-slate-700 flex items-center gap-1.5">
-                        <span className="w-2 h-2 rounded-full bg-emerald-500" />
-                        <span>Horarios disponibles:</span>
-                      </span>
-                      <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
-                        {freeCount} de {courtSlots.length} libres
-                      </span>
+                  {/* Price Tag (Read-only informative rate - Requisito #8) */}
+                  <div className="text-right shrink-0 bg-slate-50 px-3 py-1.5 rounded-2xl border border-slate-200/70">
+                    <div className="text-base sm:text-lg font-black text-slate-900 tabular-nums">
+                      ${court.price.toLocaleString('es-AR')}
                     </div>
+                    <span className="text-[10px] text-slate-400 font-medium block">
+                      por turno ({durationText})
+                    </span>
+                  </div>
+                </div>
 
-                    {/* Grid of slot buttons with full interval representations */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2">
-                      {courtSlots.map((hour) => {
-                        const occupied = isSlotOccupied(court.id, hour);
-                        const intervalText = formatSlotInterval(hour, court.sport);
+                {/* Turnos Section (Requisitos #4 & #5: intervalo completo, disponible vs ocupado) */}
+                <div className="flex flex-col gap-2.5 pt-2 border-t border-slate-100">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="font-bold text-slate-700 flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                      <span>Horarios disponibles:</span>
+                    </span>
+                    <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
+                      {freeCount} de {courtSlots.length} libres
+                    </span>
+                  </div>
 
-                        if (occupied) {
-                          return (
-                            <div
-                              key={hour}
-                              className="p-2.5 rounded-2xl border border-slate-200/70 bg-slate-100/70 text-slate-400 flex items-center justify-between cursor-not-allowed select-none transition-opacity"
-                              title={`Horario de ${intervalText} ya ocupado`}
-                            >
-                              <div className="flex flex-col">
-                                <span className="tabular-nums font-bold text-xs text-slate-500">
-                                  {intervalText}
-                                </span>
-                                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                                  Ocupado
-                                </span>
-                              </div>
-                              <span className="material-symbols-outlined text-[15px] text-slate-400">
-                                lock
-                              </span>
-                            </div>
-                          );
-                        }
+                  {/* Grid of slot buttons with full interval representations */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2">
+                    {courtSlots.map((hour) => {
+                      const occupied = isSlotOccupied(court.id, hour);
+                      const intervalText = formatSlotInterval(hour, court.sport);
 
+                      if (occupied) {
                         return (
-                          <motion.button
+                          <div
                             key={hour}
-                            whileHover={{ scale: 1.02 }}
-                            whileTap={{ scale: 0.98 }}
-                            type="button"
-                            onClick={() => onSelectSlot(court, hour)}
-                            className="p-2.5 rounded-2xl border border-emerald-300 bg-emerald-50/70 hover:bg-emerald-600 text-emerald-900 hover:text-white flex items-center justify-between transition-all cursor-pointer shadow-2xs group/slot"
-                            title={`Tocar para reservar de ${intervalText}`}
+                            className="p-2.5 rounded-2xl border border-slate-200/70 bg-slate-100/70 text-slate-400 flex items-center justify-between cursor-not-allowed select-none transition-opacity"
+                            title={`Horario de ${intervalText} ya ocupado`}
                           >
-                            <div className="flex flex-col text-left">
-                              <span className="tabular-nums font-extrabold text-xs text-emerald-950 group-hover/slot:text-white">
+                            <div className="flex flex-col">
+                              <span className="tabular-nums font-bold text-xs text-slate-500">
                                 {intervalText}
                               </span>
-                              <span className="text-[10px] font-bold text-emerald-700 group-hover/slot:text-emerald-100">
-                                Disponible · Reservar
+                              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                                Ocupado
                               </span>
                             </div>
-                            <span className="w-6 h-6 rounded-full bg-emerald-200/80 group-hover/slot:bg-white text-emerald-800 flex items-center justify-center font-black text-sm shrink-0 transition-colors">
-                              +
+                            <span className="material-symbols-outlined text-[15px] text-slate-400">
+                              lock
                             </span>
-                          </motion.button>
+                          </div>
                         );
-                      })}
-                    </div>
+                      }
+
+                      return (
+                        <button
+                          key={hour}
+                          type="button"
+                          onClick={() => onSelectSlot(court, hour)}
+                          className="p-2.5 rounded-2xl border border-emerald-300 bg-emerald-50/70 hover:bg-emerald-600 text-emerald-900 hover:text-white flex items-center justify-between transition-all cursor-pointer shadow-2xs group/slot active:scale-[0.98]"
+                          title={`Tocar para reservar de ${intervalText}`}
+                        >
+                          <div className="flex flex-col text-left">
+                            <span className="tabular-nums font-extrabold text-xs text-emerald-950 group-hover/slot:text-white">
+                              {intervalText}
+                            </span>
+                            <span className="text-[10px] font-bold text-emerald-700 group-hover/slot:text-emerald-100">
+                              Disponible · Reservar
+                            </span>
+                          </div>
+                          <span className="w-6 h-6 rounded-full bg-emerald-200/80 group-hover/slot:bg-white text-emerald-800 flex items-center justify-center font-black text-sm shrink-0 transition-colors">
+                            +
+                          </span>
+                        </button>
+                      );
+                    })}
                   </div>
-                </motion.div>
-              );
-            })
-          )}
-        </AnimatePresence>
+                </div>
+              </div>
+            );
+          })
+        )}
       </div>
     </div>
   );
